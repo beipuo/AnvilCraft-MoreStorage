@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/large_crate",
+  "textures": {
+    "bottom": "anvilcraft:block/transcendium_block",
+    "particle": "anvilcraft:block/transcendium_block",
+    "side": "anvilcraft:block/transcendium_block",
+    "top": "anvilcraft:block/transcendium_block"
+  }
+}

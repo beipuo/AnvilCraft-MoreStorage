@@ -36,22 +36,32 @@ public final class AddonTooltips {
         ItemStack stack = event.getItemStack();
         for (CrateTier tier : CrateTier.values()) {
             if (AddonBlocks.crate(tier).isIn(stack)) {
-                addCrateTooltip(event.getToolTip(), tier.crateName(), TierCapacity.crateCapacity(tier));
+                addCrateTooltip(
+                    event.getToolTip(),
+                    CrateTooltip.CRATE_KEY,
+                    CrateTooltip.CRATE_SHIFT_KEY,
+                    TierCapacity.crateCapacity(tier)
+                );
                 return;
             }
             if (AddonBlocks.largeCrate(tier).isIn(stack)) {
-                addCrateTooltip(event.getToolTip(), tier.largeCrateName(), TierCapacity.largeCrateCapacity(tier));
+                addCrateTooltip(
+                    event.getToolTip(),
+                    CrateTooltip.LARGE_CRATE_KEY,
+                    CrateTooltip.LARGE_CRATE_SHIFT_KEY,
+                    TierCapacity.largeCrateCapacity(tier)
+                );
                 return;
             }
         }
     }
 
-    private static void addCrateTooltip(List<Component> tooltip, String itemName, int capacity) {
+    private static void addCrateTooltip(List<Component> tooltip, String key, String shiftKey, int capacity) {
         if (Screen.hasShiftDown()) {
-            addLines(tooltip, I18n.get(CrateTooltip.shiftKey(itemName), capacity));
+            addLines(tooltip, I18n.get(shiftKey, capacity));
             return;
         }
-        int added = addLines(tooltip, I18n.get(CrateTooltip.key(itemName)));
+        int added = addLines(tooltip, I18n.get(key));
         tooltip.add(
             1 + added,
             Component.translatable(

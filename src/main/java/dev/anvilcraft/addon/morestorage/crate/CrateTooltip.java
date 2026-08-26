@@ -9,8 +9,17 @@ import dev.anvilcraft.addon.morestorage.AnvilCraftMoreStorage;
  * private and offer addons no way to register into, so the addon repeats the convention instead: a
  * {@code tooltip.<namespace>.item.<path>} key shown normally and a {@code .shift} key shown while
  * Shift is held, each a single string whose lines are split on {@code \n}.
+ *
+ * <p>Where it departs from upstream is that all tiers share one key per crate size instead of one
+ * per item: every tier says the same thing, and the only number in the text is passed in as an
+ * argument, so per-tier keys would be dozens of identical translations to maintain.
  */
 public final class CrateTooltip {
+    public static final String CRATE_KEY = key("crate");
+    public static final String CRATE_SHIFT_KEY = CRATE_KEY + ".shift";
+    public static final String LARGE_CRATE_KEY = key("large_crate");
+    public static final String LARGE_CRATE_SHIFT_KEY = LARGE_CRATE_KEY + ".shift";
+
     /** {@code tooltip.anvilcraft.item.crate} upstream. */
     public static final String CRATE = "Stores items";
 
@@ -20,10 +29,10 @@ public final class CrateTooltip {
     /**
      * Both sizes share this text.
      *
-     * <p>The capacity is a placeholder rather than a baked-in number because the config can change
-     * it, unlike upstream's fixed 2048 / 65536. The 1000 threshold is upstream's own, from
-     * {@code BreakBlockEventListener#preventCrateBreak}, which tests for {@code CrateBlock} and
-     * {@code LargeCrateBlock} and therefore covers these crates too.
+     * <p>The capacity is a placeholder rather than a baked-in number because it differs per tier and
+     * the config can change it, unlike upstream's fixed 2048 / 65536. The 1000 threshold is
+     * upstream's own, from {@code BreakBlockEventListener#preventCrateBreak}, which tests for
+     * {@code CrateBlock} and {@code LargeCrateBlock} and therefore covers these crates too.
      *
      * <p>Upstream's large crate has one line more — that it can be upgraded to a Shulker Container.
      * That is left out here: {@code Upgrade2ShulkerContainerBehavior} only accepts
@@ -37,11 +46,7 @@ public final class CrateTooltip {
     private CrateTooltip() {
     }
 
-    public static String key(String itemName) {
-        return "tooltip.%s.item.%s".formatted(AnvilCraftMoreStorage.MOD_ID, itemName);
-    }
-
-    public static String shiftKey(String itemName) {
-        return key(itemName) + ".shift";
+    private static String key(String name) {
+        return "tooltip.%s.item.%s".formatted(AnvilCraftMoreStorage.MOD_ID, name);
     }
 }

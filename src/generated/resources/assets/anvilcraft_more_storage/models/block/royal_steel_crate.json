@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/crate",
+  "textures": {
+    "bottom": "anvilcraft:block/royal_steel_block",
+    "particle": "anvilcraft:block/royal_steel_block",
+    "side": "anvilcraft:block/royal_steel_block",
+    "top": "anvilcraft:block/royal_steel_block"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/large_crate",
+  "textures": {
+    "bottom": "anvilcraft:block/silver_block",
+    "particle": "anvilcraft:block/silver_block",
+    "side": "anvilcraft:block/silver_block",
+    "top": "anvilcraft:block/silver_block"
+  }
+}

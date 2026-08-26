@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/large_crate",
+  "textures": {
+    "bottom": "anvilcraft:block/lead_block",
+    "particle": "anvilcraft:block/lead_block",
+    "side": "anvilcraft:block/lead_block",
+    "top": "anvilcraft:block/lead_block"
+  }
+}

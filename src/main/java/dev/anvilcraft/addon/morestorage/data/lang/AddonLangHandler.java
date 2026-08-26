@@ -1,7 +1,6 @@
 package dev.anvilcraft.addon.morestorage.data.lang;
 
 import dev.anvilcraft.addon.morestorage.AddonConfig;
-import dev.anvilcraft.addon.morestorage.crate.CrateTier;
 import dev.anvilcraft.addon.morestorage.crate.CrateTooltip;
 import dev.anvilcraft.lib.v2.config.ConfigData;
 import dev.anvilcraft.lib.v2.registrum.providers.RegistrumLangProvider;
@@ -15,11 +14,9 @@ public class AddonLangHandler {
      */
     public static void init(RegistrumLangProvider provider) {
         ConfigData.readConfigClass(provider, AddonConfig.class);
-        for (CrateTier tier : CrateTier.values()) {
-            provider.add(CrateTooltip.key(tier.crateName()), CrateTooltip.CRATE);
-            provider.add(CrateTooltip.shiftKey(tier.crateName()), CrateTooltip.SHIFT);
-            provider.add(CrateTooltip.key(tier.largeCrateName()), CrateTooltip.LARGE_CRATE);
-            provider.add(CrateTooltip.shiftKey(tier.largeCrateName()), CrateTooltip.SHIFT);
-        }
+        provider.add(CrateTooltip.CRATE_KEY, CrateTooltip.CRATE);
+        provider.add(CrateTooltip.CRATE_SHIFT_KEY, CrateTooltip.SHIFT);
+        provider.add(CrateTooltip.LARGE_CRATE_KEY, CrateTooltip.LARGE_CRATE);
+        provider.add(CrateTooltip.LARGE_CRATE_SHIFT_KEY, CrateTooltip.SHIFT);
     }
 }

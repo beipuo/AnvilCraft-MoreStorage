@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/large_crate",
+  "textures": {
+    "bottom": "anvilcraft:block/tungsten_block",
+    "particle": "anvilcraft:block/tungsten_block",
+    "side": "anvilcraft:block/tungsten_block",
+    "top": "anvilcraft:block/tungsten_block"
+  }
+}

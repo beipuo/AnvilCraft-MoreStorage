@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/crate",
+  "textures": {
+    "bottom": "anvilcraft:block/tin_block",
+    "particle": "anvilcraft:block/tin_block",
+    "side": "anvilcraft:block/tin_block",
+    "top": "anvilcraft:block/tin_block"
+  }
+}

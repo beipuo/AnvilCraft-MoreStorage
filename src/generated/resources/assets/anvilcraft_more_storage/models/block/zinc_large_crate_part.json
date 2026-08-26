@@ -1,0 +1,6 @@
+{
+  "parent": "anvilcraft:block/large_crate_part",
+  "textures": {
+    "particle": "anvilcraft:block/zinc_block"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "A": {
+      "item": "anvilcraft:tin_ingot"
+    },
+    "B": {
+      "item": "anvilcraft:crate"
+    }
+  },
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "result": {
+    "count": 1,
+    "id": "anvilcraft_more_storage:tin_crate"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/crate",
+  "textures": {
+    "bottom": "anvilcraft:block/zinc_block",
+    "particle": "anvilcraft:block/zinc_block",
+    "side": "anvilcraft:block/zinc_block",
+    "top": "anvilcraft:block/zinc_block"
+  }
+}

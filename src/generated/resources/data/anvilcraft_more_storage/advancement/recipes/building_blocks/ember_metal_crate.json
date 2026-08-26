@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_crate": {
+      "conditions": {
+        "items": [
+          {
+            "items": "anvilcraft:crate"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_ember_metal": {
+      "conditions": {
+        "items": [
+          {
+            "items": "anvilcraft:ember_metal_ingot"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "anvilcraft_more_storage:ember_metal_crate"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_crate",
+      "has_ember_metal"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "anvilcraft_more_storage:ember_metal_crate"
+    ]
+  }
+}

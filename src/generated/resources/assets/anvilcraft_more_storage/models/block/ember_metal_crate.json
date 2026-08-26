@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/crate",
+  "textures": {
+    "bottom": "anvilcraft:block/ember_metal_block",
+    "particle": "anvilcraft:block/ember_metal_block",
+    "side": "anvilcraft:block/ember_metal_block",
+    "top": "anvilcraft:block/ember_metal_block"
+  }
+}

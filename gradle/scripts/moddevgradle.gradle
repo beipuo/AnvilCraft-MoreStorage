@@ -6,6 +6,31 @@ configurations {
     testmodEmi
 }
 
+// Every run shares the run/ game directory, so each one stages the mods folder it wants before it
+// launches. This is deliberately a Sync and not a Copy: leaving the previous run's recipe viewer
+// behind would make "the EMI run" and "the JEI run" mean nothing. It also means run/mods is owned by
+// these tasks — a jar dropped in there by hand is deleted on the next launch.
+//
+// Staging into the mods folder rather than onto the run classpath is not a matter of taste:
+// RunModel.additionalRuntimeClasspathConfiguration reaches the game as a plain library, and FML
+// never scans those entries for mod metadata, so mods added that way silently fail to load.
+def stageTestmods = { String taskName, String description, Object... testmods ->
+    tasks.register(taskName, Sync) {
+        it.group = 'neoforge runs'
+        it.description = description
+        it.into layout.projectDirectory.dir('run/mods')
+        testmods.each { testmod -> it.from testmod }
+    }
+}
+
+def stageNoTestmods = stageTestmods('stageNoTestmods', 'Empties run/mods.')
+def stageJeiTestmods = stageTestmods('stageJeiTestmods', 'Puts Jade and JEI in run/mods.',
+    configurations.testmodJade, configurations.testmodJei)
+def stageEmiTestmods = stageTestmods('stageEmiTestmods', 'Puts Jade and EMI in run/mods.',
+    configurations.testmodJade, configurations.testmodEmi)
+def stageEmiJeiTestmods = stageTestmods('stageEmiJeiTestmods', 'Puts Jade, EMI and JEI in run/mods.',
+    configurations.testmodJade, configurations.testmodEmi, configurations.testmodJei)
+
 neoForge {
     version = libs.versions.neoForge.get()
 
@@ -21,6 +46,7 @@ neoForge {
             client()
             programArguments.addAll "--width", "1440", "--height", "841"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            taskBefore stageNoTestmods
         }
 
         // The same client with a recipe viewer alongside Jade, one run per viewer combination.
@@ -31,8 +57,7 @@ neoForge {
             ideName = 'Client (JEI)'
             programArguments.addAll "--width", "1440", "--height", "841"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-            additionalRuntimeClasspathConfiguration.extendsFrom configurations.testmodJade,
-                configurations.testmodJei
+            taskBefore stageJeiTestmods
         }
 
         clientEmi {
@@ -40,8 +65,7 @@ neoForge {
             ideName = 'Client (EMI)'
             programArguments.addAll "--width", "1440", "--height", "841"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-            additionalRuntimeClasspathConfiguration.extendsFrom configurations.testmodJade,
-                configurations.testmodEmi
+            taskBefore stageEmiTestmods
         }
 
         clientEmiJei {
@@ -49,19 +73,20 @@ neoForge {
             ideName = 'Client (EMI + JEI)'
             programArguments.addAll "--width", "1440", "--height", "841"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-            additionalRuntimeClasspathConfiguration.extendsFrom configurations.testmodJade,
-                configurations.testmodEmi, configurations.testmodJei
+            taskBefore stageEmiJeiTestmods
         }
 
         server {
             server()
             programArgument '--nogui'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            taskBefore stageNoTestmods
         }
 
         gameTestServer {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            taskBefore stageNoTestmods
         }
 
         data {

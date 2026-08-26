@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_crate": {
+      "conditions": {
+        "items": [
+          {
+            "items": "anvilcraft:crate"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_royal_steel": {
+      "conditions": {
+        "items": [
+          {
+            "items": "anvilcraft:royal_steel_ingot"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "anvilcraft_more_storage:royal_steel_crate"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_crate",
+      "has_royal_steel"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "anvilcraft_more_storage:royal_steel_crate"
+    ]
+  }
+}

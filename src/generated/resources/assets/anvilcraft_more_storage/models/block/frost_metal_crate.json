@@ -1,0 +1,9 @@
+{
+  "parent": "anvilcraft:block/crate",
+  "textures": {
+    "bottom": "anvilcraft:block/frost_metal_block",
+    "particle": "anvilcraft:block/frost_metal_block",
+    "side": "anvilcraft:block/frost_metal_block",
+    "top": "anvilcraft:block/frost_metal_block"
+  }
+}
