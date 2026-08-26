@@ -6,6 +6,12 @@ Adds more tiers of AnvilCraft's crates.
 
 This mod is in early development. Suggestions are welcome, and so are contributions of models, textures and features.
 
+## Roadmap
+
+- **Storage Terminal** — aggregates the contents of connected crates into a single view for searching and moving items, with a crafting grid built into the screen.
+- **Storage Interface** — exposes the contents of connected crates so hoppers, pipes and other machines can read them.
+- **Linking Hammer** — connects crates to the terminal and the interface wirelessly.
+
 ## Requirements
 
 | Item | Version |
