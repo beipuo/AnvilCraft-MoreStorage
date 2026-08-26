@@ -46,6 +46,11 @@ public final class CrateTooltip {
     private CrateTooltip() {
     }
 
+    /** Key of the extra line describing a tier's material behaviour. */
+    public static String traitKey(String traitId) {
+        return "tooltip.%s.trait.%s".formatted(AnvilCraftMoreStorage.MOD_ID, traitId);
+    }
+
     private static String key(String name) {
         return "tooltip.%s.item.%s".formatted(AnvilCraftMoreStorage.MOD_ID, name);
     }

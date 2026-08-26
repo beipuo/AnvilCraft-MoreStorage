@@ -16,9 +16,11 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
- * Gives the tiered crates the tooltip AnvilCraft's own crates have.
+ * Gives the tiered crates the tooltip AnvilCraft's own crates have, plus a line for the tiers whose
+ * material does something (see {@code CrateTrait}).
  *
  * <p>AnvilCraft adds those lines from its own {@code ItemTooltipEvent} listener, but only for items
  * present in {@code ItemTooltipManager}'s private maps, so an addon's items are skipped and have to
@@ -36,32 +38,33 @@ public final class AddonTooltips {
         ItemStack stack = event.getItemStack();
         for (CrateTier tier : CrateTier.values()) {
             if (AddonBlocks.crate(tier).isIn(stack)) {
-                addCrateTooltip(
-                    event.getToolTip(),
-                    CrateTooltip.CRATE_KEY,
-                    CrateTooltip.CRATE_SHIFT_KEY,
-                    TierCapacity.crateCapacity(tier)
-                );
+                addCrateTooltip(event.getToolTip(), tier, false);
                 return;
             }
             if (AddonBlocks.largeCrate(tier).isIn(stack)) {
-                addCrateTooltip(
-                    event.getToolTip(),
-                    CrateTooltip.LARGE_CRATE_KEY,
-                    CrateTooltip.LARGE_CRATE_SHIFT_KEY,
-                    TierCapacity.largeCrateCapacity(tier)
-                );
+                addCrateTooltip(event.getToolTip(), tier, true);
                 return;
             }
         }
     }
 
-    private static void addCrateTooltip(List<Component> tooltip, String key, String shiftKey, int capacity) {
+    private static void addCrateTooltip(List<Component> tooltip, CrateTier tier, boolean large) {
         if (Screen.hasShiftDown()) {
-            addLines(tooltip, I18n.get(shiftKey, capacity));
+            addLines(
+                tooltip,
+                I18n.get(
+                    large ? CrateTooltip.LARGE_CRATE_SHIFT_KEY : CrateTooltip.CRATE_SHIFT_KEY,
+                    large ? TierCapacity.largeCrateCapacity(tier) : TierCapacity.crateCapacity(tier)
+                )
+            );
             return;
         }
-        int added = addLines(tooltip, I18n.get(key));
+        String text = I18n.get(large ? CrateTooltip.LARGE_CRATE_KEY : CrateTooltip.CRATE_KEY);
+        @Nullable String traitId = tier.trait().tooltipId();
+        if (traitId != null) {
+            text = text + "\n" + I18n.get(CrateTooltip.traitKey(traitId));
+        }
+        int added = addLines(tooltip, text);
         tooltip.add(
             1 + added,
             Component.translatable(

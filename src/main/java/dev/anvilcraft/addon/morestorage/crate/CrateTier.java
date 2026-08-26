@@ -76,6 +76,23 @@ public enum CrateTier {
         return this.id;
     }
 
+    /**
+     * What this tier's crate does beyond holding more items.
+     *
+     * <p>Kept as a mapping rather than a constructor argument because only five of the nineteen tiers
+     * have a material behaviour worth copying — see {@link CrateTrait} for where each one comes from.
+     */
+    public CrateTrait trait() {
+        return switch (this) {
+            case LEAD -> CrateTrait.LEAD_SHIELDING;
+            case CURSED_GOLD -> CrateTrait.CURSED;
+            case ENCHANTED_GOLD -> CrateTrait.ENCHANTED_GOLD;
+            case EMBER_METAL -> CrateTrait.FIREPROOF;
+            case TRANSCENDIUM -> CrateTrait.ETERNAL;
+            default -> CrateTrait.NONE;
+        };
+    }
+
     public double defaultMultiplier() {
         return this.defaultMultiplier;
     }

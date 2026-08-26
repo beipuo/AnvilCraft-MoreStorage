@@ -85,5 +85,9 @@
   "tooltip.anvilcraft_more_storage.item.crate": "sɯǝʇᴉ sǝɹoʇS",
   "tooltip.anvilcraft_more_storage.item.crate.shift": "ʇᴉ ʞɐǝɹq oʇ ʇɟᴉɥS pꞁoɥ 'sɯǝʇᴉ 000⥝ uɐɥʇ ǝɹoɯ spꞁoɥ ʇᴉ uǝɥM\nsʇuǝʇuoɔ ǝɥʇ sdoɹp ʇᴉ ᵷuᴉʞɐǝɹᗺ\nsɯǝʇᴉ %s uᴉɐʇuoɔ uɐƆ",
   "tooltip.anvilcraft_more_storage.item.large_crate": "sɯǝʇᴉ ǝɹoɯ sǝɹoʇs 'ǝʇɐɹɔ ǝᵷɹɐꞁ Ɐ",
-  "tooltip.anvilcraft_more_storage.item.large_crate.shift": "ʇᴉ ʞɐǝɹq oʇ ʇɟᴉɥS pꞁoɥ 'sɯǝʇᴉ 000⥝ uɐɥʇ ǝɹoɯ spꞁoɥ ʇᴉ uǝɥM\nsʇuǝʇuoɔ ǝɥʇ sdoɹp ʇᴉ ᵷuᴉʞɐǝɹᗺ\nsɯǝʇᴉ %s uᴉɐʇuoɔ uɐƆ"
+  "tooltip.anvilcraft_more_storage.item.large_crate.shift": "ʇᴉ ʞɐǝɹq oʇ ʇɟᴉɥS pꞁoɥ 'sɯǝʇᴉ 000⥝ uɐɥʇ ǝɹoɯ spꞁoɥ ʇᴉ uǝɥM\nsʇuǝʇuoɔ ǝɥʇ sdoɹp ʇᴉ ᵷuᴉʞɐǝɹᗺ\nsɯǝʇᴉ %s uᴉɐʇuoɔ uɐƆ",
+  "tooltip.anvilcraft_more_storage.trait.cursed": "pǝsɹnɔ ǝq ꞁꞁᴉʍ sɹǝᴉɹɹɐƆ",
+  "tooltip.anvilcraft_more_storage.trait.enchanted_gold": "ʞɔnꞀ sʇuɐɹᵷ ߈9 ᵷuᴉʎɹɹɐɔ ⸵ǝsɹnɔ pꞁoᵷ pǝsɹnɔ ǝɥʇ sꞁǝɔuɐƆ",
+  "tooltip.anvilcraft_more_storage.trait.fireproof": "ɐʌɐꞁ puɐ ǝɹᴉɟ sǝʌᴉʌɹnS",
+  "tooltip.anvilcraft_more_storage.trait.lead_shielding": "ᵷuᴉʎɐɔǝp ɯoɹɟ sǝɥɔnoʇ ʇᴉ sʞɔoꞁq ǝʌᴉʇɔɐoᴉpɐɹ ǝɥʇ spꞁǝᴉɥS"
 }

@@ -46,6 +46,11 @@
   "tooltip.anvilcraft_more_storage.item.large_crate": "一个大型板条箱，可存储更多物品",
   "tooltip.anvilcraft_more_storage.item.large_crate.shift": "可以容纳 %s 个物品\n破坏时掉落内容物\n当存储超过 1000 个物品时，需要按住 Shift 破坏",
 
+  "tooltip.anvilcraft_more_storage.trait.cursed": "携带者会被诅咒",
+  "tooltip.anvilcraft_more_storage.trait.enchanted_gold": "抵消诅咒金带来的诅咒，携带 64 个时获得幸运",
+  "tooltip.anvilcraft_more_storage.trait.fireproof": "不会被火焰和熔岩摧毁",
+  "tooltip.anvilcraft_more_storage.trait.lead_shielding": "屏蔽相邻放射性方块的衰变",
+
   "anvilcraft_more_storage.configuration.title": "更多存储配置",
   "anvilcraft_more_storage.configuration.section.anvilcraft.more.storage.common.toml": "更多存储通用配置",
   "anvilcraft_more_storage.configuration.section.anvilcraft.more.storage.common.toml.title": "更多存储通用配置",

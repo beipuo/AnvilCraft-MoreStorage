@@ -85,5 +85,9 @@
   "tooltip.anvilcraft_more_storage.item.crate": "Stores items",
   "tooltip.anvilcraft_more_storage.item.crate.shift": "Can contain %s items\nBreaking it drops the contents\nWhen it holds more than 1000 items, hold Shift to break it",
   "tooltip.anvilcraft_more_storage.item.large_crate": "A large crate, stores more items",
-  "tooltip.anvilcraft_more_storage.item.large_crate.shift": "Can contain %s items\nBreaking it drops the contents\nWhen it holds more than 1000 items, hold Shift to break it"
+  "tooltip.anvilcraft_more_storage.item.large_crate.shift": "Can contain %s items\nBreaking it drops the contents\nWhen it holds more than 1000 items, hold Shift to break it",
+  "tooltip.anvilcraft_more_storage.trait.cursed": "Carriers will be cursed",
+  "tooltip.anvilcraft_more_storage.trait.enchanted_gold": "Cancels the cursed gold curse; carrying 64 grants Luck",
+  "tooltip.anvilcraft_more_storage.trait.fireproof": "Survives fire and lava",
+  "tooltip.anvilcraft_more_storage.trait.lead_shielding": "Shields the radioactive blocks it touches from decaying"
 }
