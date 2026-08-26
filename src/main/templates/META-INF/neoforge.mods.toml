@@ -75,8 +75,11 @@ side = "BOTH"
 [[dependencies."${mod_id}"]]
 modId = "anvilcraft"
 type = "required"
-versionRange = "[1.5.0,)"
-ordering = "NONE"
+# The crate storage system this mod extends (CrateBlock, Storages, StorageRef) was added in this
+# snapshot; the qualifier has to stay in the lower bound or maven sorts later snapshots below it.
+versionRange = "[1.6.0+snapshot.2187,)"
+# This mod subclasses AnvilCraft's crate blocks, so AnvilCraft has to load first.
+ordering = "AFTER"
 side = "BOTH"
 
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares

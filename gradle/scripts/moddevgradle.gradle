@@ -29,6 +29,9 @@ neoForge {
         data {
             data()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+            // This mod's block models parent onto AnvilCraft's crate models, so AnvilCraft's own
+            // resources have to be visible to the model providers' existing-file checks.
+            programArguments.addAll '--existing-mod', 'anvilcraft'
         }
 
         configureEach {

@@ -38,7 +38,11 @@ apply from: "$rootDir/dependencies.gradle"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-sourceSets.main.resources { srcDir 'src/generated/resources' }
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+    // runData's own bookkeeping file, not a resource.
+    exclude '.cache'
+}
 
 idea {
     module {

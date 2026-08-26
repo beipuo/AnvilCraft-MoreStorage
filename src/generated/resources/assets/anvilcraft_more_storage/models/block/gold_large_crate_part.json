@@ -1,0 +1,6 @@
+{
+  "parent": "anvilcraft:block/large_crate_part",
+  "textures": {
+    "particle": "minecraft:block/gold_block"
+  }
+}
