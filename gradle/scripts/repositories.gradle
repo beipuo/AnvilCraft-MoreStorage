@@ -16,4 +16,11 @@ repositories {
             includeGroup "com.tterrag.registrate"
         }
     }
+    maven { // Jade / JEI / EMI, loaded into the dev runs only
+        name = "CurseForge Maven"
+        url = "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
 }

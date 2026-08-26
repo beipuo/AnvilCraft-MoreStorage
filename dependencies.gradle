@@ -5,4 +5,11 @@ dependencies {
     // AnvilCraft
     implementation(libs.anvilcraft) { transitive = false }
     interfaceInjectionData(libs.anvilcraft) { transitive = false }
+
+    // Mods loaded only into the dev runs (see gradle/scripts/moddevgradle.gradle for which run gets
+    // which). They stay off the compile classpath and out of the published jar: this mod integrates
+    // with none of them, they are here to look at its blocks, recipes and tooltips in game.
+    testmodJade(libs.jade)
+    testmodJei(libs.jei)
+    testmodEmi(libs.emi)
 }

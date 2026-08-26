@@ -1,3 +1,11 @@
+// Mods that only ever exist in a dev run, one configuration each so a run can pick the combination
+// it wants. The coordinates are declared in dependencies.gradle.
+configurations {
+    testmodJade
+    testmodJei
+    testmodEmi
+}
+
 neoForge {
     version = libs.versions.neoForge.get()
 
@@ -13,6 +21,36 @@ neoForge {
             client()
             programArguments.addAll "--width", "1440", "--height", "841"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        // The same client with a recipe viewer alongside Jade, one run per viewer combination.
+        // Recipe viewers disagree about who owns the item list, so JEI and EMI are only loaded
+        // together in the run meant to test exactly that.
+        clientJei {
+            client()
+            ideName = 'Client (JEI)'
+            programArguments.addAll "--width", "1440", "--height", "841"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            additionalRuntimeClasspathConfiguration.extendsFrom configurations.testmodJade,
+                configurations.testmodJei
+        }
+
+        clientEmi {
+            client()
+            ideName = 'Client (EMI)'
+            programArguments.addAll "--width", "1440", "--height", "841"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            additionalRuntimeClasspathConfiguration.extendsFrom configurations.testmodJade,
+                configurations.testmodEmi
+        }
+
+        clientEmiJei {
+            client()
+            ideName = 'Client (EMI + JEI)'
+            programArguments.addAll "--width", "1440", "--height", "841"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            additionalRuntimeClasspathConfiguration.extendsFrom configurations.testmodJade,
+                configurations.testmodEmi, configurations.testmodJei
         }
 
         server {
