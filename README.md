@@ -23,7 +23,7 @@
 | --- | --- |
 | Minecraft | 1.21.1 |
 | NeoForge | 21.1.241 及以上 |
-| AnvilCraft | 1.6.0+snapshot.2187 及以上 |
+| AnvilCraft | 1.6.0+snapshot.2203 及以上 |
 
 ## 许可证
 

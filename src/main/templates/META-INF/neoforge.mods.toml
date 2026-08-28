@@ -75,9 +75,10 @@ side = "BOTH"
 [[dependencies."${mod_id}"]]
 modId = "anvilcraft"
 type = "required"
-# The crate storage system this mod extends (CrateBlock, Storages, StorageRef) was added in this
-# snapshot; the qualifier has to stay in the lower bound or maven sorts later snapshots below it.
-versionRange = "[1.6.0+snapshot.2187,)"
+# The storage type registry this mod compiles against (IStorageType, ModStorageTypes) and the terminal
+# RPC methods its mixins target were introduced in this snapshot; the qualifier has to stay in the
+# lower bound or maven sorts later snapshots below it.
+versionRange = "[1.6.0+snapshot.2203,)"
 # This mod subclasses AnvilCraft's crate blocks, so AnvilCraft has to load first.
 ordering = "AFTER"
 side = "BOTH"

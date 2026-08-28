@@ -8,10 +8,10 @@ import dev.dubhe.anvilcraft.block.container.storage.LargeCrateBlock;
 import dev.dubhe.anvilcraft.block.entity.storage.StorageBlockEntity;
 import dev.dubhe.anvilcraft.block.state.Cube3x3PartHalf;
 import dev.dubhe.anvilcraft.init.item.ModComponents;
+import dev.dubhe.anvilcraft.init.storage.ModStorageTypes;
 import dev.dubhe.anvilcraft.item.property.component.StorageRef;
 import dev.dubhe.anvilcraft.saved.storage.BaseStorage;
 import dev.dubhe.anvilcraft.saved.storage.LargeCrateStorage;
-import dev.dubhe.anvilcraft.saved.storage.StorageType;
 import dev.dubhe.anvilcraft.saved.storage.Storages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.ItemInteractionResult;
@@ -63,7 +63,7 @@ public final class TieredCrateMerge {
         }
 
         StorageRef ref = largeCrateStack.get(ModComponents.STORAGE);
-        UUID targetId = ref != null && ref.type() == StorageType.LARGE_CRATE
+        UUID targetId = ref != null && ref.type().is(ModStorageTypes.LARGE_CRATE.getKey())
             ? ref.id().orElseGet(UUID::randomUUID)
             : UUID.randomUUID();
         LargeCrateStorage target = Storages.get().get(targetId, LargeCrateStorage.class)
