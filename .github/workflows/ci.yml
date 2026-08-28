@@ -59,7 +59,9 @@ jobs:
           path: build/libs/${{ steps.properties.outputs.mod_id }}-neoforge-${{ steps.version.outputs.version }}.jar
 
       - name: Publish to maven
-        if: ${{ steps.properties.outputs.upload }}
+        # A bare `outputs.upload` is the string "false" here, which GitHub reads as truthy, so the
+        # comparison is what actually honours upload=false in gradle.properties.
+        if: ${{ steps.properties.outputs.upload == 'true' }}
         run: ./gradlew publish
         env:
           MAVEN_URL: ${{ secrets.MAVEN_URL }}
@@ -70,5 +72,7 @@ jobs:
       - name: gametest
         uses: Anvil-Dev/dedicated-server-launch-test@1.21.1-neoforge
         with:
-          mod: build/libs/${{ steps.properties.outputs.mod_id }}-neoforge-${{ steps.version.outputs.version }}.jar
-          extra-mods: anvilcraft:1.21.1-1.5.0+hotfix.1572
+          mods: build/libs/${{ steps.properties.outputs.mod_id }}-neoforge-${{ steps.version.outputs.version }}.jar
+          # Has to satisfy the anvilcraft range in neoforge.mods.toml, i.e. stay in step with
+          # gradle/libs.versions.toml. An older pin makes the server fail mod loading outright.
+          extra-mods: anvilcraft:1.21.1-1.6.0+snapshot.2203

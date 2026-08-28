@@ -59,5 +59,6 @@ jobs:
       - name: gametest
         uses: Anvil-Dev/dedicated-server-launch-test@1.21.1-neoforge
         with:
-          mod: build/libs/${{ steps.properties.outputs.mod_id }}-neoforge-${{ steps.version.outputs.version }}.jar
-          extra-mods: anvilcraft:1.21.1-1.5.0+hotfix.1572
+          mods: build/libs/${{ steps.properties.outputs.mod_id }}-neoforge-${{ steps.version.outputs.version }}.jar
+          # Keep in step with the anvilcraft range in neoforge.mods.toml.
+          extra-mods: anvilcraft:1.21.1-1.6.0+snapshot.2203

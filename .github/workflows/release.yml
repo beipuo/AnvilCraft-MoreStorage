@@ -51,7 +51,9 @@ jobs:
           path: build/libs/${{ steps.properties.outputs.mod_id }}-neoforge-${{ steps.version.outputs.version }}.jar
 
       - name: Publish to maven
-        if: ${{ steps.properties.outputs.upload }}
+        # "false" is a non-empty string and therefore truthy in a GitHub expression, so
+        # upload=false only takes effect with an explicit comparison.
+        if: ${{ steps.properties.outputs.upload == 'true' }}
         run: ./gradlew publish
         env:
           MAVEN_URL: ${{ secrets.MAVEN_URL }}
@@ -60,6 +62,9 @@ jobs:
         continue-on-error: true
 
       - name: Upload Release Jar
+        # Only a release event carries a tag; a workflow_dispatch run has none and the action
+        # fails with "GitHub Releases requires a tag", so a manual run just builds.
+        if: ${{ github.event_name == 'release' }}
         uses: softprops/action-gh-release@v0.1.15
         with:
           files: |
@@ -67,7 +72,7 @@ jobs:
 
       - name: publish neoforge mc mod
         uses: Kir-Antipov/mc-publish@v3.3
-        if: ${{ steps.properties.outputs.upload }}
+        if: ${{ github.event_name == 'release' && steps.properties.outputs.upload == 'true' }}
         continue-on-error: true
         with:
           name: "${{ steps.properties.outputs.mod_name }} For NeoForge v${{ steps.version.outputs.version }}"
@@ -86,7 +91,7 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           dependencies: |
-            anvilcraft@1.21.1-1.5.0(required){modrinth:vuISAWPc}{curseforge:986251}
+            anvilcraft@1.21.1-1.6.0(required){modrinth:vuISAWPc}{curseforge:986251}
 
           files: |
             build/libs/${{ steps.properties.outputs.mod_id }}-neoforge-${{ steps.version.outputs.version }}.jar
