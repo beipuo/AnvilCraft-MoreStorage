@@ -42,9 +42,9 @@ import java.util.concurrent.CompletableFuture;
  */
 public class CraftingTerminalScreen extends StorageScreen implements IStorageScreenLayout {
     private static final ResourceLocation BACKGROUND =
-        AnvilCraftMoreStorage.of("textures/gui/misc/background/hyperdimension_crafting_terminal.png");
+        AnvilCraftMoreStorage.of("textures/gui/misc/background/crafting_terminal.png");
     private static final ResourceLocation CLEAR =
-        AnvilCraftMoreStorage.of("textures/gui/misc/hyperdimension_crafting_terminal/clear.png");
+        AnvilCraftMoreStorage.of("textures/gui/misc/crafting_terminal/clear.png");
 
     private static final int BG_HEIGHT = 303;
     private static final int BG_TEXTURE_HEIGHT = 512;
@@ -82,19 +82,19 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
     private static final int INVENTORY_LABEL_WIDTH = 75;
     private static final int LABEL_COLOR = 0xFF404040;
 
-    private final UUID storageId;
+    private final UUID targetId;
 
     /** The grid the cached result was computed from, so the recipe lookup is not run every frame. */
     private List<ItemStack> resultGrid = List.of();
     private ItemStack resultStack = ItemStack.EMPTY;
 
-    public CraftingTerminalScreen(BlockPos sourcePos, UUID storageId, Component title) {
+    public CraftingTerminalScreen(BlockPos sourcePos, UUID targetId, Component title) {
         super(sourcePos, title);
-        this.storageId = storageId;
+        this.targetId = targetId;
     }
 
-    public static void openScreen(BlockPos sourcePos, UUID storageId, Component title) {
-        Minecraft.getInstance().setScreen(new CraftingTerminalScreen(sourcePos, storageId, title));
+    public static void openScreen(BlockPos sourcePos, UUID targetId, Component title) {
+        Minecraft.getInstance().setScreen(new CraftingTerminalScreen(sourcePos, targetId, title));
     }
 
     @Override
@@ -115,7 +115,7 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
             CraftingTerminalScreen.CLEAR_HEIGHT,
             CraftingTerminalScreen.CLEAR_WIDTH,
             CraftingTerminalScreen.CLEAR_HEIGHT * 2,
-            button -> this.request(CraftingTerminalClientStub.clearGrid(this.storageId))
+            button -> this.request(CraftingTerminalClientStub.clearGrid(this.targetId))
         ));
     }
 
@@ -130,12 +130,12 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
             int slot = this.gridSlotAt(mouseX, mouseY);
             if (slot != -1) {
                 this.request(Screen.hasShiftDown()
-                    ? CraftingTerminalClientStub.gridQuickMove(this.storageId, slot)
-                    : CraftingTerminalClientStub.gridClick(this.storageId, slot, button));
+                    ? CraftingTerminalClientStub.gridQuickMove(this.targetId, slot)
+                    : CraftingTerminalClientStub.gridClick(this.targetId, slot, button));
                 return true;
             }
             if (this.isOverResult(mouseX, mouseY)) {
-                this.request(CraftingTerminalClientStub.craft(this.storageId, Screen.hasShiftDown()));
+                this.request(CraftingTerminalClientStub.craft(this.targetId, Screen.hasShiftDown()));
                 return true;
             }
         }
@@ -296,7 +296,7 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
         Player player = Minecraft.getInstance().player;
         ItemStack terminal = player == null
             ? ItemStack.EMPTY
-            : CraftingTerminalGrid.findTerminal(player.getInventory(), this.storageId);
+            : CraftingTerminalGrid.findTerminal(player.getInventory(), this.targetId);
         return terminal.isEmpty()
             ? NonNullList.withSize(CraftingTerminalGrid.SIZE, ItemStack.EMPTY)
             : CraftingTerminalGrid.read(terminal);

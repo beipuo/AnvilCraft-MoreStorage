@@ -4,6 +4,8 @@ import dev.anvilcraft.addon.morestorage.AddonConfig;
 import dev.anvilcraft.addon.morestorage.crate.CrateTooltip;
 import dev.anvilcraft.addon.morestorage.crate.CrateTrait;
 import dev.anvilcraft.addon.morestorage.terminal.HyperdimensionCraftingTerminalItem;
+import dev.anvilcraft.addon.morestorage.terminal.LocalCraftingTerminalItem;
+import dev.anvilcraft.addon.morestorage.terminal.ShulkerCraftingTerminalItem;
 import dev.anvilcraft.lib.v2.config.ConfigData;
 import dev.anvilcraft.lib.v2.registrum.providers.RegistrumLangProvider;
 
@@ -24,6 +26,8 @@ public class AddonLangHandler {
             HyperdimensionCraftingTerminalItem.CRAFTING_KEY,
             HyperdimensionCraftingTerminalItem.CRAFTING_LANG
         );
+        provider.add(LocalCraftingTerminalItem.CRAFTING_KEY, LocalCraftingTerminalItem.CRAFTING_LANG);
+        provider.add(ShulkerCraftingTerminalItem.CRAFTING_KEY, ShulkerCraftingTerminalItem.CRAFTING_LANG);
         for (CrateTrait trait : CrateTrait.values()) {
             String id = trait.tooltipId();
             String english = trait.tooltipEnglish();

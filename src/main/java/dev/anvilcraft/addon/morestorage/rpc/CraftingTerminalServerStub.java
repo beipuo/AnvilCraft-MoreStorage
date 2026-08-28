@@ -1,15 +1,13 @@
 package dev.anvilcraft.addon.morestorage.rpc;
 
+import dev.anvilcraft.addon.morestorage.mixin.StorageServerStubInvoker;
 import dev.anvilcraft.addon.morestorage.terminal.CraftingTerminalGrid;
 import dev.anvilcraft.lib.v2.rpc.CallableParam;
 import dev.anvilcraft.lib.v2.rpc.IRemoteCallableValidator;
 import dev.anvilcraft.lib.v2.rpc.RemoteCallable;
 import dev.dubhe.anvilcraft.api.itemhandler.unlimited.UnlimitedItemStacksResourceHandler;
-import dev.dubhe.anvilcraft.block.container.storage.HyperdimensionStorageStationBlock;
-import dev.dubhe.anvilcraft.block.item.ShulkerContainerBlockItem;
-import dev.dubhe.anvilcraft.item.HyperdimensionTerminalItem;
-import dev.dubhe.anvilcraft.saved.storage.HyperdimensionStorage;
-import dev.dubhe.anvilcraft.saved.storage.Storages;
+import dev.dubhe.anvilcraft.rpc.StorageServerStub;
+import dev.dubhe.anvilcraft.saved.storage.BaseStorage;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -17,7 +15,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -32,16 +29,23 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Server half of the hyperdimension crafting terminal.
+ * Server half of the crafting terminals.
  *
  * <p>The grid lives on the terminal stack, so every call here finds the terminal in the caller's
  * inventory, mutates its {@code CRAFTING_GRID} component and lets the ordinary inventory sync carry
  * the change back. The returned {@link GridState} is only there so the screen can react without
  * waiting a tick for that sync.
  *
+ * <p>What the grid trades items with is named by a terminal target id, never by a storage: only the
+ * hyperdimension terminal's target is a storage id proper, while the local and shulker ones resolve to
+ * whatever is currently in range — a crate, a carried shulker container, every shulker box at once.
+ * Insertion therefore goes through upstream's {@code insertIntoTerminal}, which resolves and filters
+ * for us; extraction resolves the same storages itself because upstream's only public extraction takes
+ * the first non-empty slot rather than a specific item.
+ *
  * <p>All of it is server-authoritative: the client never decides what a click does, it only reports
  * which slot was hit. {@link CraftingTerminalValidator} makes sure the caller really carries a
- * terminal bound to the storage it names, which is what keeps a spoofed packet from reaching
+ * terminal working against the target it names, which is what keeps a spoofed packet from reaching
  * somebody else's storage.
  */
 public final class CraftingTerminalServerStub {
@@ -83,13 +87,13 @@ public final class CraftingTerminalServerStub {
     @RemoteCallable(validator = CraftingTerminalValidator.class)
     public static GridState gridClick(
         UUID playerId,
-        UUID storageId,
+        UUID targetId,
         int slot,
         int button,
         @CallableParam(clazz = ItemStack.class, field = "OPTIONAL_STREAM_CODEC") ItemStack clientCarried
     ) {
         ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
-        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), storageId);
+        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
         if (terminal.isEmpty() || slot < 0 || slot >= CraftingTerminalGrid.SIZE) {
             return CraftingTerminalServerStub.unchanged(
                 terminal,
@@ -135,9 +139,9 @@ public final class CraftingTerminalServerStub {
 
     /** Shift-click on a grid slot: the whole stack goes back to the storage. */
     @RemoteCallable(validator = CraftingTerminalValidator.class)
-    public static GridState gridQuickMove(UUID playerId, UUID storageId, int slot) {
+    public static GridState gridQuickMove(UUID playerId, UUID targetId, int slot) {
         ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
-        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), storageId);
+        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
         if (terminal.isEmpty() || slot < 0 || slot >= CraftingTerminalGrid.SIZE) {
             return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
         }
@@ -145,16 +149,15 @@ public final class CraftingTerminalServerStub {
         if (grid.get(slot).isEmpty()) {
             return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
         }
-        HyperdimensionStorage storage = CraftingTerminalServerStub.getStorage(storageId);
-        CraftingTerminalServerStub.evacuate(player, storage, grid, slot);
+        CraftingTerminalServerStub.evacuate(player, targetId, grid, slot);
         return CraftingTerminalServerStub.commit(player, terminal, grid, null);
     }
 
     /** The clear button: every grid slot goes back to the storage. */
     @RemoteCallable(validator = CraftingTerminalValidator.class)
-    public static GridState clearGrid(UUID playerId, UUID storageId) {
+    public static GridState clearGrid(UUID playerId, UUID targetId) {
         ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
-        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), storageId);
+        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
         if (terminal.isEmpty()) {
             return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
         }
@@ -162,9 +165,8 @@ public final class CraftingTerminalServerStub {
         if (CraftingTerminalGrid.isEmpty(grid)) {
             return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
         }
-        HyperdimensionStorage storage = CraftingTerminalServerStub.getStorage(storageId);
         for (int slot = 0; slot < CraftingTerminalGrid.SIZE; slot++) {
-            CraftingTerminalServerStub.evacuate(player, storage, grid, slot);
+            CraftingTerminalServerStub.evacuate(player, targetId, grid, slot);
         }
         return CraftingTerminalServerStub.commit(player, terminal, grid, null);
     }
@@ -175,7 +177,7 @@ public final class CraftingTerminalServerStub {
      */
     private static void evacuate(
         ServerPlayer player,
-        HyperdimensionStorage storage,
+        UUID targetId,
         NonNullList<ItemStack> grid,
         int slot
     ) {
@@ -184,7 +186,7 @@ public final class CraftingTerminalServerStub {
             return;
         }
         grid.set(slot, ItemStack.EMPTY);
-        CraftingTerminalServerStub.giveOrStore(player, storage, stack);
+        CraftingTerminalServerStub.giveOrStore(player, targetId, stack);
     }
 
     /**
@@ -197,12 +199,12 @@ public final class CraftingTerminalServerStub {
     @RemoteCallable(validator = CraftingTerminalValidator.class)
     public static GridState craft(
         UUID playerId,
-        UUID storageId,
+        UUID targetId,
         boolean batch,
         @CallableParam(clazz = ItemStack.class, field = "OPTIONAL_STREAM_CODEC") ItemStack clientCarried
     ) {
         ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
-        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), storageId);
+        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
         if (terminal.isEmpty()) {
             return CraftingTerminalServerStub.unchanged(
                 terminal,
@@ -211,7 +213,6 @@ public final class CraftingTerminalServerStub {
         }
         Level level = player.level();
         NonNullList<ItemStack> grid = CraftingTerminalGrid.read(terminal);
-        HyperdimensionStorage storage = CraftingTerminalServerStub.getStorage(storageId);
         ItemStack cursor = CraftingTerminalServerStub.carried(player, clientCarried).copy();
         int crafted = 0;
         for (int attempt = 0; attempt < (batch ? CraftingTerminalServerStub.MAX_BATCH_CRAFTS : 1); attempt++) {
@@ -225,7 +226,7 @@ public final class CraftingTerminalServerStub {
             if (result.isEmpty() || !CraftingTerminalServerStub.hasRoom(player, cursor, result, batch)) {
                 break;
             }
-            CraftingTerminalServerStub.consume(player, storage, grid, recipe.get(), positioned);
+            CraftingTerminalServerStub.consume(player, targetId, grid, recipe.get(), positioned);
             result.onCraftedBy(level, player, result.getCount());
             player.awardRecipes(List.<RecipeHolder<?>>of(recipe.get()));
             if (batch) {
@@ -269,7 +270,7 @@ public final class CraftingTerminalServerStub {
      */
     private static void consume(
         ServerPlayer player,
-        HyperdimensionStorage storage,
+        UUID targetId,
         NonNullList<ItemStack> grid,
         RecipeHolder<CraftingRecipe> recipe,
         CraftingInput.Positioned positioned
@@ -288,60 +289,55 @@ public final class CraftingTerminalServerStub {
                 ItemStack leftover = index < remaining.size() ? remaining.get(index).copy() : ItemStack.EMPTY;
                 stack.shrink(1);
                 if (!stack.isEmpty()) {
-                    CraftingTerminalServerStub.giveOrStore(player, storage, leftover);
+                    CraftingTerminalServerStub.giveOrStore(player, targetId, leftover);
                     continue;
                 }
                 if (!leftover.isEmpty()) {
                     grid.set(slot, leftover);
                     continue;
                 }
-                int restocked = CraftingTerminalServerStub.extractFrom(storage, resource, 1);
+                int restocked = CraftingTerminalServerStub.extractFrom(player, targetId, resource, 1);
                 grid.set(slot, restocked > 0 ? resource.copyWithCount(restocked) : ItemStack.EMPTY);
             }
         }
     }
 
-    /** Inserts as much of {@code stack} as the storage accepts, returning how much went in. */
-    private static int insertInto(HyperdimensionStorage storage, ItemStack stack) {
-        if (stack.isEmpty() || !CraftingTerminalServerStub.canStore(stack)) {
-            return 0;
-        }
-        ItemStack leftover = storage.getItems().insertItem(stack.copy(), false);
-        return stack.getCount() - leftover.getCount();
-    }
-
-    /** Pulls up to {@code amount} of {@code resource} out of the storage. */
-    private static int extractFrom(HyperdimensionStorage storage, ItemStack resource, int amount) {
-        UnlimitedItemStacksResourceHandler items = storage.getItems();
+    /**
+     * Pulls up to {@code amount} of {@code resource} out of the storages the terminal target resolves
+     * to right now.
+     *
+     * <p>Upstream's own {@code extractFromTerminal} takes whatever the first non-empty slot holds,
+     * which is right for a bundle-like click and useless for restocking a grid slot, so this walks the
+     * resolved storages itself and asks for one specific item.
+     */
+    private static int extractFrom(ServerPlayer player, UUID targetId, ItemStack resource, int amount) {
+        List<BaseStorage<?>> storages = StorageServerStubInvoker.moreStorage$terminalStorages(player, targetId);
         int extracted = 0;
-        for (int slot = 0; slot < items.size() && extracted < amount; slot++) {
-            if (items.getAmountAsLong(slot) <= 0
-                || !items.getUnlimitedStackInSlot(slot).isSameItemSameComponents(resource)) {
-                continue;
+        for (BaseStorage<?> storage : storages) {
+            UnlimitedItemStacksResourceHandler items = storage.getItems();
+            for (int slot = 0; slot < items.size() && extracted < amount; slot++) {
+                if (items.getAmountAsLong(slot) <= 0
+                    || !items.getUnlimitedStackInSlot(slot).isSameItemSameComponents(resource)) {
+                    continue;
+                }
+                extracted += items.extractItem(slot, amount - extracted, false).getCount();
             }
-            extracted += items.extractItem(slot, amount - extracted, false).getCount();
         }
         return extracted;
     }
 
     /**
-     * The same rule AnvilCraft applies to a hyperdimension storage: it refuses the containers and
-     * terminals that would let it hold itself. Widened to every {@link HyperdimensionTerminalItem}
-     * so this addon's crafting terminal is refused too.
+     * Storage first, then the inventory, then the floor.
+     *
+     * <p>Upstream's {@code insertIntoTerminal} is what resolves the target and applies each storage's
+     * own refusals — the rule that keeps a storage from swallowing the terminal that reaches it — so
+     * there is nothing for this addon to re-decide.
      */
-    private static boolean canStore(ItemStack stack) {
-        return !(stack.getItem() instanceof ShulkerContainerBlockItem)
-               && !(stack.getItem() instanceof BlockItem item
-                    && item.getBlock() instanceof HyperdimensionStorageStationBlock)
-               && !(stack.getItem() instanceof HyperdimensionTerminalItem);
-    }
-
-    /** Storage first, then the inventory, then the floor. */
-    private static void giveOrStore(ServerPlayer player, HyperdimensionStorage storage, ItemStack stack) {
+    private static void giveOrStore(ServerPlayer player, UUID targetId, ItemStack stack) {
         if (stack.isEmpty()) {
             return;
         }
-        stack.shrink(CraftingTerminalServerStub.insertInto(storage, stack));
+        stack.shrink(StorageServerStub.insertIntoTerminal(player, targetId, stack, stack.getCount()));
         CraftingTerminalServerStub.giveOrDrop(player, stack);
     }
 
@@ -407,10 +403,6 @@ public final class CraftingTerminalServerStub {
         return new GridState(grid, player.containerMenu.getCarried(), true);
     }
 
-    private static HyperdimensionStorage getStorage(UUID storageId) {
-        return Storages.get().getOrCreate(storageId, HyperdimensionStorage.class);
-    }
-
     private static ServerPlayer getServerPlayer(UUID playerId) {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) {
@@ -425,7 +417,7 @@ public final class CraftingTerminalServerStub {
 
     /**
      * Lets a call through only when the sender is the player it claims to be and really carries a
-     * crafting terminal bound to the storage it names.
+     * crafting terminal working against the target it names.
      */
     public static final class CraftingTerminalValidator implements IRemoteCallableValidator {
         @Override
@@ -433,11 +425,11 @@ public final class CraftingTerminalServerStub {
             if (!(context.player() instanceof ServerPlayer player)
                 || args.length < 2
                 || !(args[0] instanceof UUID playerId)
-                || !(args[1] instanceof UUID storageId)) {
+                || !(args[1] instanceof UUID targetId)) {
                 return false;
             }
             return player.getGameProfile().getId().equals(playerId)
-                   && !CraftingTerminalGrid.findTerminal(player.getInventory(), storageId).isEmpty();
+                   && !CraftingTerminalGrid.findTerminal(player.getInventory(), targetId).isEmpty();
         }
     }
 }

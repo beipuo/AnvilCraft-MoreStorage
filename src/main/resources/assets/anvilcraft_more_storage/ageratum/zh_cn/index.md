@@ -41,12 +41,14 @@ items:
   - anvilcraft_more_storage:royal_steel_large_crate
   - anvilcraft_more_storage:frost_metal_large_crate
   - anvilcraft_more_storage:transcendium_large_crate
+  - anvilcraft_more_storage:local_crafting_terminal
+  - anvilcraft_more_storage:shulker_crafting_terminal
   - anvilcraft_more_storage:hyperdimension_crafting_terminal
 ---
 
 # 更多存储
 
-> <ref item="anvilcraft:crate"/>和<ref item="anvilcraft:large_crate"/>高级版本，并添加以及少数材料自带的性质。另外还有一个能合成的<ref item="anvilcraft:hyperdimension_terminal"/>。
+> <ref item="anvilcraft:crate"/>和<ref item="anvilcraft:large_crate"/>高级版本，并添加以及少数材料自带的性质。另外还给铁砧工艺的三种终端各加了一个能合成的版本。
 
 
 <info>
@@ -129,26 +131,34 @@ items:
 铅板条箱共用了铅块的方块标签，所以铁砧砸在它上面同样会触发重置宝库。
 </warning>
 
-# 超维合成终端
+# 合成终端
 
 <row halign="center">
+<item id="anvilcraft_more_storage:local_crafting_terminal"/>
+<item id="anvilcraft_more_storage:shulker_crafting_terminal"/>
 <item id="anvilcraft_more_storage:hyperdimension_crafting_terminal"/>
 </row>
 
-> 界面里多了一个 3×3 合成栏的<ref item="anvilcraft:hyperdimension_terminal"/>。
+> 界面里多了一个 3×3 合成栏的终端，铁砧工艺的三种终端各有一个对应版本。
 
-绑定和打开方式与普通终端完全一致：右键<ref item="anvilcraft:hyperdimension_storage_station"/>完成绑定，之后在任何地方手持右键即可打开该存储。
+连接方式和打开方式与各自对应的普通终端完全一致：
+
+- <ref item="anvilcraft_more_storage:local_crafting_terminal"/>：自动连接 32 格以内最近的<ref item="anvilcraft:large_crate"/>
+- <ref item="anvilcraft_more_storage:shulker_crafting_terminal"/>：按优先级连接身上的<ref item="anvilcraft:shulker_container"/>、身上所有潜影盒，或 64 格以内的世界潜影集装箱
+- <ref item="anvilcraft_more_storage:hyperdimension_crafting_terminal"/>：右键<ref item="anvilcraft:hyperdimension_storage_station"/>完成绑定，之后不受距离限制
 
 ## 合成
 
 - 合成栏里放的是真实物品，且保存在终端自身上，摆到一半也能随身带走
 - 点击产物栏把成品拿到鼠标上；按住 Shift 点击则连续合成并直接进背包，最多 64 次或直到材料耗尽
-- 每次合成后，被清空的格子会自动从绑定存储里补货，所以只要存储里还有材料就能一直重复同一个配方
+- 每次合成后，被清空的格子会自动从连接的存储里补货，所以只要存储里还有材料就能一直重复同一个配方
 - 容器类副产物（空桶、玻璃瓶）会留在原来的格子里，和工作台一样
 - 合成栏上方的按钮把所有格子里的物品退回存储
 
 <info>
 只有合成时才会从存储取料。手动放进合成栏的物品仍然来自你自己的背包。
+
+本地终端和潜影终端每次使用都会重新寻找目标，所以补货用的是你当下站在哪个箱子旁边、身上带着哪些潜影盒。
 </info>
 
 <warning>

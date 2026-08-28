@@ -3,6 +3,10 @@
 
   "item.anvilcraft_more_storage.hyperdimension_crafting_terminal": "超维合成终端",
   "item.anvilcraft_more_storage.hyperdimension_crafting_terminal.crafting": "可使用绑定存储中的物品进行合成",
+  "item.anvilcraft_more_storage.local_crafting_terminal": "本地合成终端",
+  "item.anvilcraft_more_storage.local_crafting_terminal.crafting": "可使用所连接的大型板条箱中的物品进行合成",
+  "item.anvilcraft_more_storage.shulker_crafting_terminal": "潜影合成终端",
+  "item.anvilcraft_more_storage.shulker_crafting_terminal.crafting": "可使用所连接的潜影盒中的物品进行合成",
 
   "block.anvilcraft_more_storage.copper_crate": "铜板条箱",
   "block.anvilcraft_more_storage.iron_crate": "铁板条箱",

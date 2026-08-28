@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
  * widened from "is exactly the terminal item" to "is a {@link HyperdimensionTerminalItem}" by this
  * addon's mixins, which is what lets a subclass bind to a station and talk to the storage RPC at all.
  */
-public class HyperdimensionCraftingTerminalItem extends HyperdimensionTerminalItem {
+public class HyperdimensionCraftingTerminalItem extends HyperdimensionTerminalItem implements CraftingTerminal {
     /**
      * The extra tooltip line, following upstream's {@code item.<namespace>.<path>.<suffix>} naming for
      * the terminal's own bound / unbound lines.
@@ -68,6 +68,15 @@ public class HyperdimensionCraftingTerminalItem extends HyperdimensionTerminalIt
     public static @Nullable UUID boundStorage(ItemStack stack) {
         TerminalBinding binding = stack.get(ModComponents.TERMINAL_BINDING);
         return binding == null ? null : binding.id().orElse(null);
+    }
+
+    /**
+     * The hyperdimension terminal is the one kind whose target is a storage id proper, remembered on
+     * the stack rather than derived from the player.
+     */
+    @Override
+    public @Nullable UUID craftingTarget(Player player, ItemStack stack) {
+        return HyperdimensionCraftingTerminalItem.boundStorage(stack);
     }
 
     /**

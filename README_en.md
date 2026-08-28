@@ -9,7 +9,7 @@ This mod is in early development. Suggestions are welcome, and so are contributi
 ## Contents
 
 - **Tiered Crates** — a version of the crate and the large crate per tier, with capacity scaled by a multiplier; a few materials also carry their own properties into the crate.
-- **Hyperdimension Crafting Terminal** — AnvilCraft's hyperdimension terminal with a 3x3 crafting grid in its screen, restocked from the bound hyperdimension storage.
+- **Crafting Terminals** — a subclass of each of AnvilCraft's terminals (local, shulker, hyperdimension) with a 3x3 crafting grid in its screen, restocked from whatever storage that terminal connects to.
 
 ## Roadmap
 

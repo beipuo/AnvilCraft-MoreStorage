@@ -41,12 +41,14 @@ items:
   - anvilcraft_more_storage:royal_steel_large_crate
   - anvilcraft_more_storage:frost_metal_large_crate
   - anvilcraft_more_storage:transcendium_large_crate
+  - anvilcraft_more_storage:local_crafting_terminal
+  - anvilcraft_more_storage:shulker_crafting_terminal
   - anvilcraft_more_storage:hyperdimension_crafting_terminal
 ---
 
 # More Storage
 
-> Higher tiers of the <ref item="anvilcraft:crate"/> and the <ref item="anvilcraft:large_crate"/>, a few of which also carry their material's own properties, plus a <ref item="anvilcraft:hyperdimension_terminal"/> that can craft.
+> Higher tiers of the <ref item="anvilcraft:crate"/> and the <ref item="anvilcraft:large_crate"/>, a few of which also carry their material's own properties, plus a crafting version of each of AnvilCraft's three terminals.
 
 <info>
 Tiered crates are axe-mineable just like the original, and a large crate item stacks to 16.
@@ -128,26 +130,34 @@ Zinc, tin, silver and titanium are AnvilCraft's "common metals" (see <ref item="
 The lead crate shares the lead block's block tag, so dropping an anvil onto it resets a vault as well.
 </warning>
 
-# Hyperdimension Crafting Terminal
+# Crafting Terminals
 
 <row halign="center">
+<item id="anvilcraft_more_storage:local_crafting_terminal"/>
+<item id="anvilcraft_more_storage:shulker_crafting_terminal"/>
 <item id="anvilcraft_more_storage:hyperdimension_crafting_terminal"/>
 </row>
 
-> A <ref item="anvilcraft:hyperdimension_terminal"/> with a 3x3 crafting grid in its screen.
+> Terminals with a 3x3 crafting grid in their screen, one for each of AnvilCraft's three terminals.
 
-It is bound and opened exactly like the plain terminal: right-click a <ref item="anvilcraft:hyperdimension_storage_station"/> to bind it, then right-click while holding it to open the storage from anywhere.
+Each connects and opens exactly like the plain terminal it is based on:
+
+- <ref item="anvilcraft_more_storage:local_crafting_terminal"/> — the nearest <ref item="anvilcraft:large_crate"/> within 32 blocks
+- <ref item="anvilcraft_more_storage:shulker_crafting_terminal"/> — by priority: a <ref item="anvilcraft:shulker_container"/> you carry, every shulker box you carry at once, or the nearest world shulker container within 64 blocks
+- <ref item="anvilcraft_more_storage:hyperdimension_crafting_terminal"/> — right-click a <ref item="anvilcraft:hyperdimension_storage_station"/> to bind it, then open it from any distance
 
 ## Crafting
 
 - The grid holds real items and is stored on the terminal itself, so a half-finished layout travels with it
 - Click the result to craft onto the cursor; shift-click to craft repeatedly into your inventory, up to 64 times or until the ingredients run out
-- After every craft, each slot that ran empty is refilled from the bound storage, so a recipe can be repeated as long as the storage has the ingredients
+- After every craft, each slot that ran empty is refilled from the connected storage, so a recipe can be repeated as long as the storage has the ingredients
 - Container remainders — empty buckets, glass bottles — stay in the slot they came from, just like a crafting table
 - The button above the grid empties every slot back into the storage
 
 <info>
 Ingredients are only ever pulled while crafting. Items you place in the grid by hand come from your own inventory as usual.
+
+The local and shulker terminals resolve their target on every use, so what a grid restocks from follows which crate you are standing next to and which shulker boxes you are carrying.
 </info>
 
 <warning>

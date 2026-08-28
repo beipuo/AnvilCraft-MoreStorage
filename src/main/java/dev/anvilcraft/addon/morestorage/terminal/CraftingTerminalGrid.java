@@ -3,6 +3,7 @@ package dev.anvilcraft.addon.morestorage.terminal;
 import dev.anvilcraft.addon.morestorage.init.AddonComponents;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -16,7 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The nine crafting slots carried by a hyperdimension crafting terminal.
+ * The nine crafting slots carried by a {@link CraftingTerminal}.
  *
  * <p>Everything here works off the terminal {@link ItemStack} rather than a container: the grid is
  * stored in {@link AddonComponents#CRAFTING_GRID}, which both sides can read. The server mutates the
@@ -85,28 +86,35 @@ public final class CraftingTerminalGrid {
     }
 
     /**
-     * Finds the crafting terminal bound to {@code storageId} in {@code inventory}.
+     * Finds the crafting terminal working against {@code targetId} in {@code inventory}.
      *
      * <p>Main hand first, then the offhand, then the rest of the inventory — the same order
      * AnvilCraft uses when it looks for a bound terminal, so the one the player is actually holding
      * wins when several are carried.
      */
-    public static ItemStack findTerminal(Inventory inventory, UUID storageId) {
+    public static ItemStack findTerminal(Inventory inventory, UUID targetId) {
         for (ItemStack stack : List.of(inventory.getSelected(), inventory.offhand.get(0))) {
-            if (CraftingTerminalGrid.isBoundCrafter(stack, storageId)) {
+            if (CraftingTerminalGrid.isCrafter(inventory.player, stack, targetId)) {
                 return stack;
             }
         }
         for (ItemStack stack : inventory.items) {
-            if (CraftingTerminalGrid.isBoundCrafter(stack, storageId)) {
+            if (CraftingTerminalGrid.isCrafter(inventory.player, stack, targetId)) {
                 return stack;
             }
         }
         return ItemStack.EMPTY;
     }
 
-    private static boolean isBoundCrafter(ItemStack stack, UUID storageId) {
-        return stack.getItem() instanceof HyperdimensionCraftingTerminalItem
-               && storageId.equals(HyperdimensionCraftingTerminalItem.boundStorage(stack));
+    /**
+     * Whether {@code stack} is a crafting terminal whose target is {@code targetId}.
+     *
+     * <p>Which is not the same question for every kind: the hyperdimension one compares the storage
+     * bound to that one stack, the local and shulker ones a target derived from the player — so both
+     * of theirs match as soon as the player carries any terminal of that kind.
+     */
+    private static boolean isCrafter(Player player, ItemStack stack, UUID targetId) {
+        return stack.getItem() instanceof CraftingTerminal crafter
+               && targetId.equals(crafter.craftingTarget(player, stack));
     }
 }

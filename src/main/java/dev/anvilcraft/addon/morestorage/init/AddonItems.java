@@ -1,6 +1,8 @@
 package dev.anvilcraft.addon.morestorage.init;
 
 import dev.anvilcraft.addon.morestorage.terminal.HyperdimensionCraftingTerminalItem;
+import dev.anvilcraft.addon.morestorage.terminal.LocalCraftingTerminalItem;
+import dev.anvilcraft.addon.morestorage.terminal.ShulkerCraftingTerminalItem;
 import dev.anvilcraft.lib.v2.registrum.providers.RegistrumRecipeProvider;
 import dev.anvilcraft.lib.v2.registrum.util.entry.ItemEntry;
 import dev.dubhe.anvilcraft.init.item.ModComponents;
@@ -48,6 +50,47 @@ public class AddonItems {
             .define('A', Blocks.CRAFTING_TABLE)
             .define('B', ModItems.HYPERDIMENSION_TERMINAL)
             .unlockedBy("has_hyperdimension_terminal", RegistrumRecipeProvider.has(ModItems.HYPERDIMENSION_TERMINAL))
+            .save(provider))
+        .register();
+
+    /**
+     * A local terminal that can also craft.
+     *
+     * <p>The properties are AnvilCraft's own local terminal minus its {@code TERMINAL_BALANCE_MODE}:
+     * item balancing looks the connected storage up from a fixed list of terminal items, so the
+     * component would sit there inert on a subclass. The nine crafting slots are what this addon adds.
+     */
+    public static final ItemEntry<LocalCraftingTerminalItem> LOCAL_CRAFTING_TERMINAL = REGISTRUM
+        .item("local_crafting_terminal", LocalCraftingTerminalItem::new)
+        .properties(properties -> properties
+            .stacksTo(1)
+            .component(AddonComponents.CRAFTING_GRID, ItemContainerContents.EMPTY))
+        .lang("Local Crafting Terminal")
+        .model((ctx, provider) -> provider.generated(ctx.lazy()))
+        // A crafting table bolted onto a finished terminal, which is exactly what the item is.
+        .recipe((ctx, provider) -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ctx.get())
+            .pattern("A")
+            .pattern("B")
+            .define('A', Blocks.CRAFTING_TABLE)
+            .define('B', ModItems.LOCAL_TERMINAL)
+            .unlockedBy("has_local_terminal", RegistrumRecipeProvider.has(ModItems.LOCAL_TERMINAL))
+            .save(provider))
+        .register();
+
+    /** A shulker terminal that can also craft; same reasoning as {@link #LOCAL_CRAFTING_TERMINAL}. */
+    public static final ItemEntry<ShulkerCraftingTerminalItem> SHULKER_CRAFTING_TERMINAL = REGISTRUM
+        .item("shulker_crafting_terminal", ShulkerCraftingTerminalItem::new)
+        .properties(properties -> properties
+            .stacksTo(1)
+            .component(AddonComponents.CRAFTING_GRID, ItemContainerContents.EMPTY))
+        .lang("Shulker Crafting Terminal")
+        .model((ctx, provider) -> provider.generated(ctx.lazy()))
+        .recipe((ctx, provider) -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ctx.get())
+            .pattern("A")
+            .pattern("B")
+            .define('A', Blocks.CRAFTING_TABLE)
+            .define('B', ModItems.SHULKER_TERMINAL)
+            .unlockedBy("has_shulker_terminal", RegistrumRecipeProvider.has(ModItems.SHULKER_TERMINAL))
             .save(provider))
         .register();
 

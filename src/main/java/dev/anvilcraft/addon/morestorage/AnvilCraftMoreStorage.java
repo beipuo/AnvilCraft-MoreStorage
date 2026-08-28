@@ -23,9 +23,9 @@ import org.slf4j.Logger;
  * them interchangeable with plain crates: they share the storage screen, the item handler capability,
  * and the 3x3x3 neighbour pooling that lets adjacent crates be searched as one inventory.
  *
- * <p>The hyperdimension crafting terminal is the same idea applied to AnvilCraft's terminal — it
- * subclasses the terminal item and adds a crafting grid that pulls its ingredients from the bound
- * storage.
+ * <p>The crafting terminals are the same idea applied to AnvilCraft's terminals — one subclass per
+ * terminal item, each adding a crafting grid that pulls its ingredients from whatever storage that
+ * terminal connects to.
  */
 @Mod(AnvilCraftMoreStorage.MOD_ID)
 public class AnvilCraftMoreStorage {
