@@ -4,8 +4,13 @@
   "package": "dev.anvilcraft.addon.morestorage.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "HyperdimensionStorageStationBlockMixin",
+    "StorageServerStubMixin"
   ],
   "client": [
+    "CategoryListMixin",
+    "StorageScreenInvoker",
+    "StorageScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

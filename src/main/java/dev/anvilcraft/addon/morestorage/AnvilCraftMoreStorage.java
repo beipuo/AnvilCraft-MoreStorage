@@ -4,7 +4,9 @@ import com.mojang.logging.LogUtils;
 import dev.anvilcraft.addon.morestorage.data.AddonDatagen;
 import dev.anvilcraft.addon.morestorage.init.AddonBlockEntities;
 import dev.anvilcraft.addon.morestorage.init.AddonBlocks;
+import dev.anvilcraft.addon.morestorage.init.AddonComponents;
 import dev.anvilcraft.addon.morestorage.init.AddonItemGroups;
+import dev.anvilcraft.addon.morestorage.init.AddonItems;
 import dev.anvilcraft.lib.v2.config.ConfigManager;
 import dev.anvilcraft.lib.v2.registrum.Registrum;
 import net.minecraft.resources.ResourceLocation;
@@ -14,12 +16,16 @@ import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
 
 /**
- * Tiered crates for AnvilCraft.
+ * Storage extensions for AnvilCraft.
  *
- * <p>Each tier is a copy of AnvilCraft's crate and large crate whose backing storage is widened by a
- * configurable multiplier. The blocks subclass AnvilCraft's own, which is what keeps them
- * interchangeable with plain crates: they share the storage screen, the item handler capability, and
- * the 3x3x3 neighbour pooling that lets adjacent crates be searched as one inventory.
+ * <p>The crates are a copy of AnvilCraft's crate and large crate per tier, whose backing storage is
+ * widened by a configurable multiplier. They subclass AnvilCraft's own blocks, which is what keeps
+ * them interchangeable with plain crates: they share the storage screen, the item handler capability,
+ * and the 3x3x3 neighbour pooling that lets adjacent crates be searched as one inventory.
+ *
+ * <p>The hyperdimension crafting terminal is the same idea applied to AnvilCraft's terminal — it
+ * subclasses the terminal item and adds a crafting grid that pulls its ingredients from the bound
+ * storage.
  */
 @Mod(AnvilCraftMoreStorage.MOD_ID)
 public class AnvilCraftMoreStorage {
@@ -30,7 +36,9 @@ public class AnvilCraftMoreStorage {
 
     public AnvilCraftMoreStorage(IEventBus modEventBus, ModContainer modContainer) {
         AddonItemGroups.register(modEventBus);
+        AddonComponents.register(modEventBus);
         AddonBlocks.register();
+        AddonItems.register();
         AddonBlockEntities.register();
         AddonDatagen.init();
     }

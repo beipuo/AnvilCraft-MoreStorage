@@ -6,6 +6,11 @@ Adds more tiers of AnvilCraft's crates.
 
 This mod is in early development. Suggestions are welcome, and so are contributions of models, textures and features.
 
+## Contents
+
+- **Tiered Crates** — a version of the crate and the large crate per tier, with capacity scaled by a multiplier; a few materials also carry their own properties into the crate.
+- **Hyperdimension Crafting Terminal** — AnvilCraft's hyperdimension terminal with a 3x3 crafting grid in its screen, restocked from the bound hyperdimension storage.
+
 ## Roadmap
 
 - **Storage Terminal** — aggregates the contents of connected crates into a single view for searching and moving items, with a crafting grid built into the screen.

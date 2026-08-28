@@ -81,6 +81,8 @@
   "block.anvilcraft_more_storage.tungsten_large_crate": "Large Tungsten Crate",
   "block.anvilcraft_more_storage.zinc_crate": "Zinc Crate",
   "block.anvilcraft_more_storage.zinc_large_crate": "Large Zinc Crate",
+  "item.anvilcraft_more_storage.hyperdimension_crafting_terminal": "Hyperdimension Crafting Terminal",
+  "item.anvilcraft_more_storage.hyperdimension_crafting_terminal.crafting": "Crafts from the bound storage",
   "itemGroup.anvilcraft_more_storage.main": "AnvilCraft More Storage",
   "tooltip.anvilcraft_more_storage.item.crate": "Stores items",
   "tooltip.anvilcraft_more_storage.item.crate.shift": "Can contain %s items\nBreaking it drops the contents\nWhen it holds more than 1000 items, hold Shift to break it",

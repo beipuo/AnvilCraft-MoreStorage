@@ -1,6 +1,9 @@
 {
   "itemGroup.anvilcraft_more_storage.main": "AnvilCraft 更多存储",
 
+  "item.anvilcraft_more_storage.hyperdimension_crafting_terminal": "超维合成终端",
+  "item.anvilcraft_more_storage.hyperdimension_crafting_terminal.crafting": "可使用绑定存储中的物品进行合成",
+
   "block.anvilcraft_more_storage.copper_crate": "铜板条箱",
   "block.anvilcraft_more_storage.iron_crate": "铁板条箱",
   "block.anvilcraft_more_storage.zinc_crate": "锌板条箱",

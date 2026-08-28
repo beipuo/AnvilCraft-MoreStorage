@@ -41,11 +41,12 @@ items:
   - anvilcraft_more_storage:royal_steel_large_crate
   - anvilcraft_more_storage:frost_metal_large_crate
   - anvilcraft_more_storage:transcendium_large_crate
+  - anvilcraft_more_storage:hyperdimension_crafting_terminal
 ---
 
 # More Storage
 
-> Higher tiers of the <ref item="anvilcraft:crate"/> and the <ref item="anvilcraft:large_crate"/>, a few of which also carry their material's own properties.
+> Higher tiers of the <ref item="anvilcraft:crate"/> and the <ref item="anvilcraft:large_crate"/>, a few of which also carry their material's own properties, plus a <ref item="anvilcraft:hyperdimension_terminal"/> that can craft.
 
 <info>
 Tiered crates are axe-mineable just like the original, and a large crate item stacks to 16.
@@ -125,4 +126,30 @@ Zinc, tin, silver and titanium are AnvilCraft's "common metals" (see <ref item="
 
 <warning>
 The lead crate shares the lead block's block tag, so dropping an anvil onto it resets a vault as well.
+</warning>
+
+# Hyperdimension Crafting Terminal
+
+<row halign="center">
+<item id="anvilcraft_more_storage:hyperdimension_crafting_terminal"/>
+</row>
+
+> A <ref item="anvilcraft:hyperdimension_terminal"/> with a 3x3 crafting grid in its screen.
+
+It is bound and opened exactly like the plain terminal: right-click a <ref item="anvilcraft:hyperdimension_storage_station"/> to bind it, then right-click while holding it to open the storage from anywhere.
+
+## Crafting
+
+- The grid holds real items and is stored on the terminal itself, so a half-finished layout travels with it
+- Click the result to craft onto the cursor; shift-click to craft repeatedly into your inventory, up to 64 times or until the ingredients run out
+- After every craft, each slot that ran empty is refilled from the bound storage, so a recipe can be repeated as long as the storage has the ingredients
+- Container remainders — empty buckets, glass bottles — stay in the slot they came from, just like a crafting table
+- The button above the grid empties every slot back into the storage
+
+<info>
+Ingredients are only ever pulled while crafting. Items you place in the grid by hand come from your own inventory as usual.
+</info>
+
+<warning>
+Like the plain terminal, a crafting terminal cannot be put inside a hyperdimension storage.
 </warning>
