@@ -6,6 +6,11 @@ dependencies {
     implementation(libs.anvilcraft) { transitive = false }
     interfaceInjectionData(libs.anvilcraft) { transitive = false }
 
+    // Optional viewer APIs used only by the matching runtime integration classes. These remain
+    // compile-only so the published addon does not require either recipe viewer.
+    compileOnly(libs.jei)
+    compileOnly(libs.emi)
+
     // Mods loaded only into the dev runs (see gradle/scripts/moddevgradle.gradle for which run gets
     // which). They stay off the compile classpath and out of the published jar: this mod integrates
     // with none of them, they are here to look at its blocks, recipes and tooltips in game.

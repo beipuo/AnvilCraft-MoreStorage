@@ -9,6 +9,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.client.event.ContainerScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -153,6 +155,63 @@ public abstract class StorageScreenMixin {
     private int moreStorage$withdrawButtonY(int original) {
         IStorageScreenLayout layout = this.moreStorage$layout();
         return layout == null ? original : layout.moreStorage$withdrawButtonY();
+    }
+
+    /**
+     * {@code StorageScreen} bypasses {@code AbstractContainerScreen.render}, which normally publishes
+     * the two container render events used by JEI and EMI. Recreate those event boundaries for the
+     * addon's terminal without asking the parent screen to draw itself a second time.
+     */
+    @Inject(
+        method = "render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Ldev/dubhe/anvilcraft/client/gui/screen/StorageScreen;"
+                     + "renderBackground(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",
+            shift = At.Shift.AFTER
+        )
+    )
+    private void moreStorage$renderXeiBackground(
+        GuiGraphics graphics,
+        int mouseX,
+        int mouseY,
+        float partialTick,
+        CallbackInfo ci
+    ) {
+        IStorageScreenLayout layout = this.moreStorage$layout();
+        if (layout != null) {
+            StorageScreen screen = (StorageScreen) (Object) this;
+            NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Background(screen, graphics, mouseX, mouseY));
+        }
+    }
+
+    @Inject(
+        method = "render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Ldev/dubhe/anvilcraft/client/gui/screen/StorageScreen;"
+                     + "renderCarriedItem(Lnet/minecraft/client/gui/GuiGraphics;II)V"
+        )
+    )
+    private void moreStorage$renderXeiForeground(
+        GuiGraphics graphics,
+        int mouseX,
+        int mouseY,
+        float partialTick,
+        CallbackInfo ci
+    ) {
+        IStorageScreenLayout layout = this.moreStorage$layout();
+        if (layout == null) {
+            return;
+        }
+        StorageScreen screen = (StorageScreen) (Object) this;
+        graphics.pose().pushPose();
+        try {
+            graphics.pose().translate(screen.getLeftPos(), screen.getTopPos(), 0.0F);
+            NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Foreground(screen, graphics, mouseX, mouseY));
+        } finally {
+            graphics.pose().popPose();
+        }
     }
 
     @Inject(
