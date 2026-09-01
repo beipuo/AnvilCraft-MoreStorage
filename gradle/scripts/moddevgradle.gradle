@@ -18,12 +18,25 @@ def stageTestmods = { String taskName, String description, Object... testmods ->
     tasks.register(taskName, Sync) {
         it.group = 'neoforge runs'
         it.description = description
+        // All staging tasks own the same directory, so one task's output snapshot cannot tell whether
+        // a different run changed it. Always sync to prevent a stale recipe viewer surviving a switch.
+        it.outputs.upToDateWhen { false }
         it.into layout.projectDirectory.dir('run/mods')
         testmods.each { testmod -> it.from testmod }
     }
 }
 
-def stageNoTestmods = stageTestmods('stageNoTestmods', 'Empties run/mods.')
+def runModsDir = layout.projectDirectory.dir('run/mods').asFile
+def stageNoTestmods = tasks.register('stageNoTestmods') {
+    it.group = 'neoforge runs'
+    it.description = 'Empties run/mods.'
+    it.outputs.upToDateWhen { false }
+    it.doLast {
+        if (runModsDir.exists()) {
+            runModsDir.listFiles()?.each { file -> file.delete() }
+        }
+    }
+}
 def stageJeiTestmods = stageTestmods('stageJeiTestmods', 'Puts Jade and JEI in run/mods.',
     configurations.testmodJade, configurations.testmodJei)
 def stageEmiTestmods = stageTestmods('stageEmiTestmods', 'Puts Jade and EMI in run/mods.',
