@@ -15,11 +15,19 @@ configurations {
 // RunModel.additionalRuntimeClasspathConfiguration reaches the game as a plain library, and FML
 // never scans those entries for mod metadata, so mods added that way silently fail to load.
 def stageTestmods = { String taskName, String description, Object... testmods ->
-    tasks.register(taskName, Sync) {
+    tasks.register(taskName) {
         it.group = 'neoforge runs'
         it.description = description
-        it.into layout.projectDirectory.dir('run/mods')
-        testmods.each { testmod -> it.from testmod }
+        it.inputs.files(testmods)
+        // All staging tasks own the same directory, so one task's output snapshot cannot tell whether
+        // a different run changed it. Always sync to prevent a stale recipe viewer surviving a switch.
+        it.outputs.upToDateWhen { false }
+        it.doLast {
+            project.sync {
+                into layout.projectDirectory.dir('run/mods')
+                testmods.each { testmod -> from testmod }
+            }
+        }
     }
 }
 
