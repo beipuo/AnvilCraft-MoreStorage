@@ -83,6 +83,7 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
     private static final int INVENTORY_LABEL_Y = 209;
     private static final int INVENTORY_LABEL_WIDTH = 75;
     private static final int LABEL_COLOR = 0xFF404040;
+    private static final int ANVIL_NAME_COLOR = 0xFFFFFFFF;
 
     /** Vanilla's own two colours for an anvil's level cost: affordable, and not. */
     private static final int COST_COLOR = 0xFF80FF20;
@@ -93,6 +94,13 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
 
     /** Vanilla's cap on a renamed item, so the field cannot hold more than the server will keep. */
     private static final int MAX_NAME_LENGTH = 50;
+
+    /** The two anvil name-field variants embedded in {@code anvil_terminal.png}. */
+    private static final int ANVIL_NAME_TEXTURE_X = 107;
+    private static final int ANVIL_NAME_TEXTURE_EMPTY_Y = 319;
+    private static final int ANVIL_NAME_TEXTURE_FILLED_Y = 303;
+    private static final int ANVIL_NAME_TEXTURE_WIDTH = 110;
+    private static final int ANVIL_NAME_TEXTURE_HEIGHT = 16;
 
     private final UUID targetId;
 
@@ -114,6 +122,9 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
 
     /** Set while the name field is being filled in from the terminal, so it does not echo back. */
     private boolean syncingName;
+
+    /** The base input used the last time the anvil name field was synchronised. */
+    private ItemStack syncedAnvilInput = ItemStack.EMPTY;
 
     /** First visible row of the stonecutter's recipe picker. */
     private int recipeScroll;
@@ -178,7 +189,7 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
         ));
         this.nameField.setBordered(false);
         this.nameField.setMaxLength(CraftingTerminalScreen.MAX_NAME_LENGTH);
-        this.nameField.setTextColor(CraftingTerminalScreen.LABEL_COLOR);
+        this.nameField.setTextColor(CraftingTerminalScreen.ANVIL_NAME_COLOR);
         this.syncName();
         this.nameField.setResponder(this::onNameChanged);
         this.syncedMode = this.mode();
@@ -198,13 +209,17 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         TerminalMode mode = this.mode();
+        if (mode == TerminalMode.ANVIL && !ItemStack.matches(this.syncedAnvilInput, this.grid().get(0))) {
+            this.syncName();
+        }
         if (this.clearButton != null) {
             this.clearButton.visible = mode == TerminalMode.CRAFTING;
         }
         if (this.nameField != null) {
             boolean anvil = mode == TerminalMode.ANVIL;
-            this.nameField.visible = anvil;
-            this.nameField.setEditable(anvil);
+            boolean hasInput = anvil && !this.grid().get(0).isEmpty();
+            this.nameField.visible = hasInput;
+            this.nameField.setEditable(hasInput);
             if (!anvil && this.nameField.isFocused()) {
                 this.setFocused(null);
             }
@@ -312,6 +327,9 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
         TerminalLayout layout = TerminalLayout.of(mode);
         this.renderSectionLabels(graphics, mode);
         List<ItemStack> inputs = this.grid();
+        if (mode == TerminalMode.ANVIL) {
+            this.renderAnvilNameBackground(graphics, inputs.get(0));
+        }
         for (int slot = 0; slot < mode.inputSlots(); slot++) {
             int x = this.getLeftPos() + layout.slotX(slot);
             int y = this.getTopPos() + layout.slotY(slot);
@@ -591,9 +609,30 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
         if (this.nameField == null) {
             return;
         }
+        ItemStack input = this.grid().get(0);
         this.syncingName = true;
-        this.nameField.setValue(TerminalState.anvilName(this.terminal()));
+        String name = TerminalState.anvilName(this.terminal());
+        this.nameField.setValue(name.isEmpty() && !input.isEmpty() ? input.getHoverName().getString() : name);
         this.syncingName = false;
+        this.syncedAnvilInput = input.copy();
+    }
+
+    /** Draws the empty or filled name-field strip from the matching part of the anvil background. */
+    private void renderAnvilNameBackground(GuiGraphics graphics, ItemStack input) {
+        int sourceY = input.isEmpty()
+            ? CraftingTerminalScreen.ANVIL_NAME_TEXTURE_EMPTY_Y
+            : CraftingTerminalScreen.ANVIL_NAME_TEXTURE_FILLED_Y;
+        graphics.blit(
+            TerminalLayout.of(TerminalMode.ANVIL).background(),
+            this.getLeftPos() + TerminalLayout.ANVIL_NAME_X + 1,
+            this.getTopPos() + TerminalLayout.ANVIL_NAME_Y + 1,
+            CraftingTerminalScreen.ANVIL_NAME_TEXTURE_X,
+            sourceY,
+            CraftingTerminalScreen.ANVIL_NAME_TEXTURE_WIDTH,
+            CraftingTerminalScreen.ANVIL_NAME_TEXTURE_HEIGHT,
+            CraftingTerminalScreen.BG_TEXTURE_HEIGHT,
+            CraftingTerminalScreen.BG_TEXTURE_HEIGHT
+        );
     }
 
     private void onNameChanged(String name) {
