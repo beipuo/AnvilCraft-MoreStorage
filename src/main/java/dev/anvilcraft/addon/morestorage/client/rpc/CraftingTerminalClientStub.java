@@ -1,6 +1,7 @@
 package dev.anvilcraft.addon.morestorage.client.rpc;
 
 import dev.anvilcraft.addon.morestorage.rpc.CraftingTerminalServerStub;
+import dev.anvilcraft.addon.morestorage.terminal.TerminalMode;
 import dev.anvilcraft.lib.v2.rpc.RPC;
 import dev.anvilcraft.lib.v2.rpc.RpcTarget;
 import net.minecraft.client.Minecraft;
@@ -69,6 +70,48 @@ public final class CraftingTerminalClientStub {
             CraftingTerminalServerStub::clearGrid,
             CraftingTerminalClientStub.playerId(),
             targetId
+        );
+    }
+
+    /** One of the four switch buttons: turn the terminal into a different workbench. */
+    public static CompletableFuture<CraftingTerminalServerStub.GridState> setMode(
+        UUID targetId,
+        TerminalMode mode
+    ) {
+        return RPC.invoke(
+            RpcTarget.server(),
+            CraftingTerminalServerStub::setMode,
+            CraftingTerminalClientStub.playerId(),
+            targetId,
+            mode
+        );
+    }
+
+    /** A keystroke in the anvil mode's name field. */
+    public static CompletableFuture<CraftingTerminalServerStub.GridState> setAnvilName(
+        UUID targetId,
+        String name
+    ) {
+        return RPC.invoke(
+            RpcTarget.server(),
+            CraftingTerminalServerStub::setAnvilName,
+            CraftingTerminalClientStub.playerId(),
+            targetId,
+            name
+        );
+    }
+
+    /** A click on one of the recipes the stonecutter mode's input matches. */
+    public static CompletableFuture<CraftingTerminalServerStub.GridState> setStonecutterChoice(
+        UUID targetId,
+        int choice
+    ) {
+        return RPC.invoke(
+            RpcTarget.server(),
+            CraftingTerminalServerStub::setStonecutterChoice,
+            CraftingTerminalClientStub.playerId(),
+            targetId,
+            choice
         );
     }
 

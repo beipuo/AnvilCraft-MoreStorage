@@ -6,7 +6,7 @@ neoForge = "21.1.241"
 # (IStorageType, ModStorageTypes) replaced the old StorageType enum in 2203, so that is the real
 # floor now. anvillib is pinned to the version this AnvilCraft build itself depends on.
 anvillib = "2.0.0+snapshot.516"
-anvilcraft = "1.6.0+snapshot.2203"
+anvilcraft = "1.6.0+snapshot.2225"
 modDevGradle = "2.0.142"
 lombok = "8.7.1"
 # Mods loaded only into the dev runs, never dependencies of the built jar. A CurseForge "version" is

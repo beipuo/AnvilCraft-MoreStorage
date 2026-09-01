@@ -2,6 +2,9 @@ package dev.anvilcraft.addon.morestorage.rpc;
 
 import dev.anvilcraft.addon.morestorage.mixin.StorageServerStubInvoker;
 import dev.anvilcraft.addon.morestorage.terminal.CraftingTerminalGrid;
+import dev.anvilcraft.addon.morestorage.terminal.TerminalMode;
+import dev.anvilcraft.addon.morestorage.terminal.TerminalRecipes;
+import dev.anvilcraft.addon.morestorage.terminal.TerminalState;
 import dev.anvilcraft.lib.v2.rpc.CallableParam;
 import dev.anvilcraft.lib.v2.rpc.IRemoteCallableValidator;
 import dev.anvilcraft.lib.v2.rpc.RemoteCallable;
@@ -14,7 +17,12 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -43,6 +51,10 @@ import java.util.UUID;
  * for us; extraction resolves the same storages itself because upstream's only public extraction takes
  * the first non-empty slot rather than a specific item.
  *
+ * <p>The terminal is four workbenches in one, and its {@link TerminalMode} decides which. The mode is
+ * on the stack as well, so it is read here rather than sent: a click only ever says which slot was hit,
+ * and what that means is settled server-side.
+ *
  * <p>All of it is server-authoritative: the client never decides what a click does, it only reports
  * which slot was hit. {@link CraftingTerminalValidator} makes sure the caller really carries a
  * terminal working against the target it names, which is what keeps a spoofed packet from reaching
@@ -51,6 +63,9 @@ import java.util.UUID;
 public final class CraftingTerminalServerStub {
     /** How many crafts a single shift-click may perform. */
     private static final int MAX_BATCH_CRAFTS = 64;
+
+    /** Vanilla's own cap on a renamed item, and on the rename packet that carries it. */
+    private static final int MAX_NAME_LENGTH = 50;
 
     public static final StreamCodec<RegistryFriendlyByteBuf, List<ItemStack>> GRID_STREAM_CODEC =
         ItemStack.OPTIONAL_STREAM_CODEC.apply(ByteBufCodecs.list());
@@ -63,7 +78,7 @@ public final class CraftingTerminalServerStub {
      *
      * @param grid    the nine slots, so the screen can redraw before the inventory sync lands
      * @param carried what the cursor holds now
-     * @param changed whether anything actually moved; the screen plays its click sound only then
+     * @param changed whether anything actually moved; the screen refreshes the storage list only then
      */
     public record GridState(List<ItemStack> grid, ItemStack carried, boolean changed) {
         public static final StreamCodec<RegistryFriendlyByteBuf, GridState> STREAM_CODEC = StreamCodec.composite(
@@ -75,11 +90,12 @@ public final class CraftingTerminalServerStub {
     }
 
     /**
-     * A click on one of the nine grid slots, with the ordinary inventory-click semantics:
+     * A click on one of the mode's input slots, with the ordinary inventory-click semantics:
      * left picks up or drops everything, right picks up half or drops one, and a click with a
      * different item on the cursor swaps the two.
      *
-     * @param slot         index into the 3×3 grid, row-major
+     * @param slot         index into the nine-slot grid, row-major; only the slots the current mode
+     *                     uses are accepted
      * @param button       0 for left, anything else for right
      * @param clientCarried what the client thinks the cursor holds; only trusted in creative mode,
      *                      where the client owns its own cursor
@@ -94,7 +110,7 @@ public final class CraftingTerminalServerStub {
     ) {
         ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
         ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
-        if (terminal.isEmpty() || slot < 0 || slot >= CraftingTerminalGrid.SIZE) {
+        if (terminal.isEmpty() || !CraftingTerminalServerStub.holdsSlot(terminal, slot)) {
             return CraftingTerminalServerStub.unchanged(
                 terminal,
                 CraftingTerminalServerStub.carried(player, clientCarried)
@@ -134,15 +150,16 @@ public final class CraftingTerminalServerStub {
                 CraftingTerminalServerStub.carried(player, clientCarried)
             );
         }
+        CraftingTerminalServerStub.resetChoice(terminal);
         return CraftingTerminalServerStub.commit(player, terminal, grid, cursor);
     }
 
-    /** Shift-click on a grid slot: the whole stack goes back to the storage. */
+    /** Shift-click on an input slot: the whole stack goes back to the storage. */
     @RemoteCallable(validator = CraftingTerminalValidator.class)
     public static GridState gridQuickMove(UUID playerId, UUID targetId, int slot) {
         ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
         ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
-        if (terminal.isEmpty() || slot < 0 || slot >= CraftingTerminalGrid.SIZE) {
+        if (terminal.isEmpty() || !CraftingTerminalServerStub.holdsSlot(terminal, slot)) {
             return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
         }
         NonNullList<ItemStack> grid = CraftingTerminalGrid.read(terminal);
@@ -150,6 +167,7 @@ public final class CraftingTerminalServerStub {
             return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
         }
         CraftingTerminalServerStub.evacuate(player, targetId, grid, slot);
+        CraftingTerminalServerStub.resetChoice(terminal);
         return CraftingTerminalServerStub.commit(player, terminal, grid, null);
     }
 
@@ -168,33 +186,75 @@ public final class CraftingTerminalServerStub {
         for (int slot = 0; slot < CraftingTerminalGrid.SIZE; slot++) {
             CraftingTerminalServerStub.evacuate(player, targetId, grid, slot);
         }
+        CraftingTerminalServerStub.resetChoice(terminal);
         return CraftingTerminalServerStub.commit(player, terminal, grid, null);
     }
 
     /**
-     * Empties one grid slot: into the storage first, then whatever the storage refused into the
-     * inventory, and anything still left onto the floor.
+     * One of the four switch buttons: the terminal becomes a different workbench.
+     *
+     * <p>The grid is emptied back into the storage first. Every mode shares the same nine slots and
+     * uses only the first few, so anything left in a slot the new mode does not draw would be invisible
+     * and unreachable; sending it home is the one behaviour with no way to lose an item.
      */
-    private static void evacuate(
-        ServerPlayer player,
-        UUID targetId,
-        NonNullList<ItemStack> grid,
-        int slot
-    ) {
-        ItemStack stack = grid.get(slot);
-        if (stack.isEmpty()) {
-            return;
+    @RemoteCallable(validator = CraftingTerminalValidator.class)
+    public static GridState setMode(UUID playerId, UUID targetId, TerminalMode mode) {
+        ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
+        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
+        if (terminal.isEmpty() || TerminalState.mode(terminal) == mode) {
+            return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
         }
-        grid.set(slot, ItemStack.EMPTY);
-        CraftingTerminalServerStub.giveOrStore(player, targetId, stack);
+        NonNullList<ItemStack> grid = CraftingTerminalGrid.read(terminal);
+        for (int slot = 0; slot < CraftingTerminalGrid.SIZE; slot++) {
+            CraftingTerminalServerStub.evacuate(player, targetId, grid, slot);
+        }
+        TerminalState.setMode(terminal, mode);
+        TerminalState.setAnvilName(terminal, "");
+        TerminalState.setStonecutterChoice(terminal, 0);
+        return CraftingTerminalServerStub.commit(player, terminal, grid, null);
     }
 
     /**
-     * A click on the result slot.
+     * What the anvil mode should rename its result to, as typed.
      *
-     * @param batch shift-click: craft repeatedly into the inventory until the ingredients, the
-     *              inventory space or {@link #MAX_BATCH_CRAFTS} run out. Otherwise a single craft
-     *              lands on the cursor.
+     * <p>Sent per keystroke, exactly like vanilla's rename packet, and capped the same way. Nothing
+     * moves, so the answer reports no change and the storage list is left alone.
+     */
+    @RemoteCallable(validator = CraftingTerminalValidator.class)
+    public static GridState setAnvilName(UUID playerId, UUID targetId, String name) {
+        ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
+        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
+        if (terminal.isEmpty()) {
+            return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
+        }
+        TerminalState.setAnvilName(
+            terminal,
+            name.length() > CraftingTerminalServerStub.MAX_NAME_LENGTH
+                ? name.substring(0, CraftingTerminalServerStub.MAX_NAME_LENGTH)
+                : name
+        );
+        return CraftingTerminalServerStub.store(player, terminal);
+    }
+
+    /** Which of the recipes the stonecutter input matches the player picked. */
+    @RemoteCallable(validator = CraftingTerminalValidator.class)
+    public static GridState setStonecutterChoice(UUID playerId, UUID targetId, int choice) {
+        ServerPlayer player = CraftingTerminalServerStub.getServerPlayer(playerId);
+        ItemStack terminal = CraftingTerminalGrid.findTerminal(player.getInventory(), targetId);
+        if (terminal.isEmpty()) {
+            return CraftingTerminalServerStub.unchanged(terminal, player.containerMenu.getCarried());
+        }
+        TerminalState.setStonecutterChoice(terminal, Math.max(0, choice));
+        return CraftingTerminalServerStub.store(player, terminal);
+    }
+
+    /**
+     * A click on the result slot, meaning whatever the current mode makes of its inputs.
+     *
+     * @param batch shift-click: the result goes to the inventory instead of the cursor, and the three
+     *              recipe modes keep going until the ingredients, the inventory space or
+     *              {@link #MAX_BATCH_CRAFTS} run out. The anvil does one at a time whatever happens —
+     *              it has no repeatable form.
      */
     @RemoteCallable(validator = CraftingTerminalValidator.class)
     public static GridState craft(
@@ -211,9 +271,27 @@ public final class CraftingTerminalServerStub {
                 CraftingTerminalServerStub.carried(player, clientCarried)
             );
         }
-        Level level = player.level();
         NonNullList<ItemStack> grid = CraftingTerminalGrid.read(terminal);
         ItemStack cursor = CraftingTerminalServerStub.carried(player, clientCarried).copy();
+        TerminalMode mode = TerminalState.mode(terminal);
+        return switch (mode) {
+            case CRAFTING -> CraftingTerminalServerStub.craftGrid(player, targetId, terminal, grid, cursor, batch);
+            case STONECUTTING, SMITHING ->
+                CraftingTerminalServerStub.craftRecipe(player, targetId, terminal, grid, cursor, batch, mode);
+            case ANVIL -> CraftingTerminalServerStub.craftAnvil(player, terminal, grid, cursor, batch);
+        };
+    }
+
+    /** The 3×3 crafting grid, with vanilla's shaped-recipe placement and container remainders. */
+    private static GridState craftGrid(
+        ServerPlayer player,
+        UUID targetId,
+        ItemStack terminal,
+        NonNullList<ItemStack> grid,
+        ItemStack cursor,
+        boolean batch
+    ) {
+        Level level = player.level();
         int crafted = 0;
         for (int attempt = 0; attempt < (batch ? CraftingTerminalServerStub.MAX_BATCH_CRAFTS : 1); attempt++) {
             CraftingInput.Positioned positioned = CraftingTerminalGrid.positioned(grid);
@@ -239,12 +317,158 @@ public final class CraftingTerminalServerStub {
             crafted++;
         }
         if (crafted == 0) {
-            return CraftingTerminalServerStub.unchanged(
-                terminal,
-                CraftingTerminalServerStub.carried(player, clientCarried)
-            );
+            return CraftingTerminalServerStub.unchanged(terminal, cursor);
         }
         return CraftingTerminalServerStub.commit(player, terminal, grid, batch ? null : cursor);
+    }
+
+    /**
+     * The stonecutter and the smithing table: one recipe over the mode's own leading slots, one of each
+     * consumed per craft and the emptied slots restocked from the storage.
+     */
+    private static GridState craftRecipe(
+        ServerPlayer player,
+        UUID targetId,
+        ItemStack terminal,
+        NonNullList<ItemStack> grid,
+        ItemStack cursor,
+        boolean batch,
+        TerminalMode mode
+    ) {
+        Level level = player.level();
+        int crafted = 0;
+        for (int attempt = 0; attempt < (batch ? CraftingTerminalServerStub.MAX_BATCH_CRAFTS : 1); attempt++) {
+            TerminalRecipes.Outcome outcome = TerminalRecipes.outcome(
+                player,
+                mode,
+                grid,
+                TerminalState.anvilName(terminal),
+                TerminalState.stonecutterChoice(terminal)
+            );
+            ItemStack result = outcome.result().copy();
+            if (!outcome.takeable()
+                || result.isEmpty()
+                || !CraftingTerminalServerStub.hasRoom(player, cursor, result, batch)) {
+                break;
+            }
+            CraftingTerminalServerStub.consumeInputs(player, targetId, grid, mode.inputSlots());
+            result.onCraftedBy(level, player, result.getCount());
+            if (batch) {
+                CraftingTerminalServerStub.giveOrDrop(player, result);
+            } else if (cursor.isEmpty()) {
+                cursor = result;
+            } else {
+                cursor.grow(result.getCount());
+            }
+            crafted++;
+        }
+        if (crafted == 0) {
+            return CraftingTerminalServerStub.unchanged(terminal, cursor);
+        }
+        CraftingTerminalServerStub.playModeSound(player, mode);
+        return CraftingTerminalServerStub.commit(player, terminal, grid, batch ? null : cursor);
+    }
+
+    /**
+     * The anvil.
+     *
+     * <p>A throwaway {@link AnvilMenu} decides both what comes out and what it costs, and taking its
+     * result slot is what charges the levels and consumes the inputs — the same call vanilla makes, so
+     * repair-material counts and the "too expensive" ceiling need no restating here. The leftovers are
+     * read back out of the menu's own input slots.
+     *
+     * <p>Nothing is restocked from the storage: an anvil consumes what it was given, and quietly
+     * pulling in a second copy of an enchanted book or a damaged tool is not something a player asked
+     * for.
+     */
+    private static GridState craftAnvil(
+        ServerPlayer player,
+        ItemStack terminal,
+        NonNullList<ItemStack> grid,
+        ItemStack cursor,
+        boolean toInventory
+    ) {
+        AnvilMenu menu = TerminalRecipes.anvilMenu(
+            player,
+            grid.get(0),
+            grid.get(1),
+            TerminalState.anvilName(terminal)
+        );
+        Slot resultSlot = menu.getSlot(AnvilMenu.RESULT_SLOT);
+        ItemStack result = resultSlot.getItem().copy();
+        if (result.isEmpty()
+            || !resultSlot.mayPickup(player)
+            || !CraftingTerminalServerStub.hasRoom(player, cursor, result, toInventory)) {
+            return CraftingTerminalServerStub.unchanged(terminal, cursor);
+        }
+        resultSlot.onTake(player, result);
+        grid.set(0, menu.getSlot(AnvilMenu.INPUT_SLOT).getItem());
+        grid.set(1, menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem());
+        CraftingTerminalServerStub.playModeSound(player, TerminalMode.ANVIL);
+        if (toInventory) {
+            CraftingTerminalServerStub.giveOrDrop(player, result);
+            return CraftingTerminalServerStub.commit(player, terminal, grid, null);
+        }
+        if (cursor.isEmpty()) {
+            cursor = result;
+        } else {
+            cursor.grow(result.getCount());
+        }
+        return CraftingTerminalServerStub.commit(player, terminal, grid, cursor);
+    }
+
+    /**
+     * The workbench the mode stands in for, heard where the player is standing.
+     *
+     * <p>The crafting grid is left silent on purpose: that is the one mode that was already there, and
+     * a crafting table makes no sound when you take from it either.
+     */
+    private static void playModeSound(ServerPlayer player, TerminalMode mode) {
+        SoundEvent sound = switch (mode) {
+            case CRAFTING -> null;
+            case STONECUTTING -> SoundEvents.UI_STONECUTTER_TAKE_RESULT;
+            case SMITHING -> SoundEvents.SMITHING_TABLE_USE;
+            case ANVIL -> SoundEvents.ANVIL_USE;
+        };
+        if (sound != null) {
+            player.level().playSound(null, player.blockPosition(), sound, SoundSource.BLOCKS, 1.0F, 1.0F);
+        }
+    }
+
+    /** Whether {@code slot} is one of the slots the terminal's current mode actually draws. */
+    private static boolean holdsSlot(ItemStack terminal, int slot) {
+        return slot >= 0 && slot < TerminalState.mode(terminal).inputSlots();
+    }
+
+    /**
+     * Forgets the selected stonecutter recipe, because the input it was chosen for is gone.
+     *
+     * <p>Zero rather than "nothing selected": with a fresh input the first of its recipes is the one a
+     * player almost always wants, and one that resolves to nothing until clicked would make the common
+     * case two clicks. Out of range is still harmless — the result simply stays empty.
+     */
+    private static void resetChoice(ItemStack terminal) {
+        if (TerminalState.mode(terminal) == TerminalMode.STONECUTTING) {
+            TerminalState.setStonecutterChoice(terminal, 0);
+        }
+    }
+
+    /**
+     * Empties one grid slot: into the storage first, then whatever the storage refused into the
+     * inventory, and anything still left onto the floor.
+     */
+    private static void evacuate(
+        ServerPlayer player,
+        UUID targetId,
+        NonNullList<ItemStack> grid,
+        int slot
+    ) {
+        ItemStack stack = grid.get(slot);
+        if (stack.isEmpty()) {
+            return;
+        }
+        grid.set(slot, ItemStack.EMPTY);
+        CraftingTerminalServerStub.giveOrStore(player, targetId, stack);
     }
 
     /** Whether one more craft of {@code result} fits where it is headed. */
@@ -299,6 +523,31 @@ public final class CraftingTerminalServerStub {
                 int restocked = CraftingTerminalServerStub.extractFrom(player, targetId, resource, 1);
                 grid.set(slot, restocked > 0 ? resource.copyWithCount(restocked) : ItemStack.EMPTY);
             }
+        }
+    }
+
+    /**
+     * The same one-of-each-and-restock, for the modes whose inputs are simply the first
+     * {@code inputSlots} of the grid with no shape to them.
+     */
+    private static void consumeInputs(
+        ServerPlayer player,
+        UUID targetId,
+        NonNullList<ItemStack> grid,
+        int inputSlots
+    ) {
+        for (int slot = 0; slot < inputSlots; slot++) {
+            ItemStack stack = grid.get(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            ItemStack resource = stack.copyWithCount(1);
+            stack.shrink(1);
+            if (!stack.isEmpty()) {
+                continue;
+            }
+            int restocked = CraftingTerminalServerStub.extractFrom(player, targetId, resource, 1);
+            grid.set(slot, restocked > 0 ? resource.copyWithCount(restocked) : ItemStack.EMPTY);
         }
     }
 
@@ -379,6 +628,19 @@ public final class CraftingTerminalServerStub {
             ? NonNullList.withSize(CraftingTerminalGrid.SIZE, ItemStack.EMPTY)
             : CraftingTerminalGrid.read(terminal);
         return new GridState(grid, cursor, false);
+    }
+
+    /**
+     * Pushes an edit to the terminal that moved no items — a mode's own setting.
+     *
+     * <p>Reported as unchanged so the screen leaves the storage list where it is: nothing entered or
+     * left a storage, and reordering it on every keystroke of a rename would be a round trip per
+     * letter.
+     */
+    private static GridState store(ServerPlayer player, ItemStack terminal) {
+        player.getInventory().setChanged();
+        player.containerMenu.broadcastChanges();
+        return new GridState(CraftingTerminalGrid.read(terminal), player.containerMenu.getCarried(), false);
     }
 
     /**
