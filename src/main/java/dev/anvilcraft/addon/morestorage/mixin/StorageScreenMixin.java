@@ -1,8 +1,13 @@
 package dev.anvilcraft.addon.morestorage.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.anvilcraft.addon.morestorage.client.gui.IStorageScreenLayout;
+import dev.dubhe.anvilcraft.client.gui.component.TexturedButton;
 import dev.dubhe.anvilcraft.client.gui.screen.StorageScreen;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -32,6 +37,61 @@ public abstract class StorageScreenMixin {
     @Unique
     private @Nullable IStorageScreenLayout moreStorage$layout() {
         return this instanceof IStorageScreenLayout layout ? layout : null;
+    }
+
+    /** The parent screen's new crafting mode is replaced by this addon's four terminal modes. */
+    @Inject(method = "checkCraftingAvailable()V", at = @At("HEAD"), cancellable = true)
+    private void moreStorage$skipParentCraftingCheck(CallbackInfo ci) {
+        if (this.moreStorage$layout() != null) {
+            ci.cancel();
+        }
+    }
+
+    /** Do not restore the parent screen's crafting panel over the terminal's own selected mode. */
+    @Inject(method = "restoreCraftingMode()V", at = @At("HEAD"), cancellable = true)
+    private void moreStorage$skipParentCraftingRestore(CallbackInfo ci) {
+        if (this.moreStorage$layout() != null) {
+            ci.cancel();
+        }
+    }
+
+    /** Hide and disable the parent's crafting toggle; the terminal has its own four mode buttons. */
+    @Inject(method = "init()V", at = @At("TAIL"))
+    private void moreStorage$hideParentCraftingButton(CallbackInfo ci) {
+        IStorageScreenLayout layout = this.moreStorage$layout();
+        if (layout == null) {
+            return;
+        }
+        StorageScreen screen = (StorageScreen) (Object) this;
+        int buttonX = screen.getLeftPos() + 278;
+        int buttonY = screen.getTopPos() + 195;
+        for (GuiEventListener child : screen.children()) {
+            if (child instanceof TexturedButton button
+                && button.getX() == buttonX
+                && button.getY() == buttonY) {
+                button.visible = false;
+                button.active = false;
+            }
+        }
+    }
+
+    /** The terminal's mode is stored on its item, not in the parent's per-storage crafting state. */
+    @WrapOperation(
+        method = "removed()V",
+        at = @At(
+            value = "INVOKE",
+            target = "Ldev/dubhe/anvilcraft/client/rpc/StorageClientStub;"
+                     + "craftingSetLastOpened(Lnet/minecraft/core/BlockPos;Z)V"
+        )
+    )
+    private void moreStorage$skipParentCraftingSave(
+        BlockPos sourcePos,
+        boolean opened,
+        Operation<Void> original
+    ) {
+        if (this.moreStorage$layout() == null) {
+            original.call(sourcePos, opened);
+        }
     }
 
     @ModifyArg(

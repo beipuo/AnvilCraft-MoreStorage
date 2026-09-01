@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 /**
  * Widens "is this exact terminal" to "is a terminal of this kind".
  *
- * <p>The four checks touched here all compare against an exact terminal item, which means a subclass
+ * <p>The checks touched here all compare against an exact terminal item, which means a subclass
  * of one would be treated as an ordinary stack: the storage RPC would refuse to serve it, a storage
  * would happily swallow it, item balancing would ignore the storage it is connected to, and clicking a
  * stack onto it in the inventory would do nothing. Answering the item-identity question by type
@@ -31,6 +31,8 @@ public abstract class StorageServerStubMixin {
     @WrapOperation(
         method = {
             "isBoundTerminal(Lnet/minecraft/world/item/ItemStack;Ljava/util/UUID;Ljava/util/UUID;)Z",
+            "isBoundTerminalClientSafe(Lnet/minecraft/world/item/ItemStack;)Z",
+            "ownsBoundTerminal(Lnet/minecraft/server/level/ServerPlayer;Ljava/util/UUID;)Z",
             "canStore(Ldev/dubhe/anvilcraft/saved/storage/BaseStorage;Lnet/minecraft/world/item/ItemStack;)Z",
             "collectBoundStorage(Lnet/minecraft/world/item/ItemStack;Ljava/util/List;)V",
             "terminalTargetId(Lnet/minecraft/server/level/ServerPlayer;"

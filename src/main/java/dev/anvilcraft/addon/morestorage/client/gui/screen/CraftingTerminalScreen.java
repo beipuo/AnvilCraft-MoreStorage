@@ -146,7 +146,13 @@ public class CraftingTerminalScreen extends StorageScreen implements IStorageScr
     }
 
     public static void openScreen(BlockPos sourcePos, UUID targetId, Component title) {
-        Minecraft.getInstance().setScreen(new CraftingTerminalScreen(sourcePos, targetId, title));
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+        CraftingTerminalScreen screen = new CraftingTerminalScreen(sourcePos, targetId, title);
+        minecraft.player.containerMenu = screen.getMenu();
+        minecraft.setScreen(screen);
     }
 
     @Override

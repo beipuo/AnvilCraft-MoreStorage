@@ -11,7 +11,11 @@
   "client": [
     "CategoryListMixin",
     "StorageScreenInvoker",
-    "StorageScreenMixin"
+    "StorageScreenMixin",
+    "StorageJeiSupportMixin",
+    "TerminalInsertionDecorationMixin",
+    "TerminalJeiStorageCacheMixin",
+    "TerminalRemoteOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 1
